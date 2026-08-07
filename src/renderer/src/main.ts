@@ -1,5 +1,6 @@
+import type { OutfitId } from '../../shared/types'
 import { Live2DRenderer } from './live2d'
-import { fetchModelManifest } from './models'
+import { ModelManager } from './modelManager'
 import { mapTrackingToParams } from './tracking/paramMapper'
 import { ParamSmoother } from './tracking/smoother'
 import { MediaPipeTracker } from './tracking/mediapipeTracker'
@@ -23,9 +24,9 @@ async function main(): Promise<void> {
   const canvas = document.querySelector<HTMLCanvasElement>('#live2d-canvas')
   if (!canvas) throw new Error('canvas not found')
 
-  const manifest = await fetchModelManifest()
   const renderer = new Live2DRenderer(canvas)
-  await renderer.load(manifest[0].modelJsonUrl)
+  const modelManager = new ModelManager(renderer)
+  await modelManager.init()
 
   const video = await startCamera()
   const tracker = new MediaPipeTracker()
@@ -40,6 +41,16 @@ async function main(): Promise<void> {
       inputHeight: 720
     }
   )
+
+  const localShortcutIds: OutfitId[] = ['casual', 'event', 'school_summer', 'school_winter']
+  window.addEventListener('keydown', (event) => {
+    const index = ['1', '2', '3', '4'].indexOf(event.key)
+    if (index >= 0) modelManager.switchModel(localShortcutIds[index]).catch((error) => console.error(error))
+  })
+
+  window.api.onModelSwitch((id) => {
+    modelManager.switchModel(id).catch((error) => console.error(error))
+  })
 }
 
 main().catch((error) => {
