@@ -1,0 +1,7 @@
+{
+  "model": "mutsumi_school_summer-2023.moc",
+  "textures": [
+    "texture_01.png"
+  ],
+  "physics": "mutsumi_school_summer-2023.physics.json"
+}

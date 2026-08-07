@@ -1,0 +1,8 @@
+{
+  "model": "mutsumi_casual-2023.moc",
+  "textures": [
+    "texture_00.png",
+    "texture_01.png"
+  ],
+  "physics": "mutsumi_casual-2023.physics.json"
+}

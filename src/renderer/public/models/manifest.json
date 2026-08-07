@@ -1,0 +1,22 @@
+[
+  {
+    "id": "casual",
+    "displayName": "便装",
+    "modelJsonUrl": "models/casual/model.json"
+  },
+  {
+    "id": "event",
+    "displayName": "活动剧情装",
+    "modelJsonUrl": "models/event/model.json"
+  },
+  {
+    "id": "school_summer",
+    "displayName": "夏季校服",
+    "modelJsonUrl": "models/school_summer/model.json"
+  },
+  {
+    "id": "school_winter",
+    "displayName": "冬季校服",
+    "modelJsonUrl": "models/school_winter/model.json"
+  }
+]

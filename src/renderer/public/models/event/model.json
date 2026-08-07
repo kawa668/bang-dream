@@ -1,0 +1,325 @@
+{
+  "model": "mutsumi_other-25.moc",
+  "textures": [
+    "texture_00.png",
+    "texture_01.png"
+  ],
+  "physics": "mutsumi_other-25.physics.json",
+  "motions": {
+    "idle": [
+      {
+        "file": "idle01.mtn"
+      },
+      {
+        "file": "maskon_idle01.mtn"
+      },
+      {
+        "file": "mts_idle01.mtn"
+      }
+    ],
+    "tap_body": [
+      {
+        "file": "angry01.mtn"
+      },
+      {
+        "file": "bow.mtn"
+      },
+      {
+        "file": "bye01.mtn"
+      },
+      {
+        "file": "kime01.mtn"
+      },
+      {
+        "file": "maskon_angry01.mtn"
+      },
+      {
+        "file": "maskon_bow.mtn"
+      },
+      {
+        "file": "maskon_bye01.mtn"
+      },
+      {
+        "file": "maskon_kime01.mtn"
+      },
+      {
+        "file": "maskon_nf01.mtn"
+      },
+      {
+        "file": "maskon_nf02.mtn"
+      },
+      {
+        "file": "maskon_nf03.mtn"
+      },
+      {
+        "file": "maskon_nf04.mtn"
+      },
+      {
+        "file": "maskon_nf05.mtn"
+      },
+      {
+        "file": "maskon_nf_left01.mtn"
+      },
+      {
+        "file": "maskon_nf_right01.mtn"
+      },
+      {
+        "file": "maskon_nnf01.mtn"
+      },
+      {
+        "file": "maskon_nnf02.mtn"
+      },
+      {
+        "file": "maskon_nnf03.mtn"
+      },
+      {
+        "file": "maskon_nnf04.mtn"
+      },
+      {
+        "file": "maskon_nnf05.mtn"
+      },
+      {
+        "file": "maskon_nnf_left01.mtn"
+      },
+      {
+        "file": "maskon_nnf_right01.mtn"
+      },
+      {
+        "file": "maskon_odoodo01.mtn"
+      },
+      {
+        "file": "maskon_sad01.mtn"
+      },
+      {
+        "file": "maskon_sad02.mtn"
+      },
+      {
+        "file": "maskon_sad03.mtn"
+      },
+      {
+        "file": "maskon_sad04.mtn"
+      },
+      {
+        "file": "maskon_smile01.mtn"
+      },
+      {
+        "file": "maskon_smile02.mtn"
+      },
+      {
+        "file": "maskon_smile04.mtn"
+      },
+      {
+        "file": "maskon_surprised01.mtn"
+      },
+      {
+        "file": "maskon_thinking01.mtn"
+      },
+      {
+        "file": "mts_angry01.mtn"
+      },
+      {
+        "file": "mts_angry02.mtn"
+      },
+      {
+        "file": "mts_angry03.mtn"
+      },
+      {
+        "file": "mts_angry04.mtn"
+      },
+      {
+        "file": "mts_cry01.mtn"
+      },
+      {
+        "file": "mts_nf01.mtn"
+      },
+      {
+        "file": "mts_nf02.mtn"
+      },
+      {
+        "file": "mts_nf03.mtn"
+      },
+      {
+        "file": "mts_nf04.mtn"
+      },
+      {
+        "file": "mts_nf05.mtn"
+      },
+      {
+        "file": "mts_nf_left01.mtn"
+      },
+      {
+        "file": "mts_nf_right01.mtn"
+      },
+      {
+        "file": "mts_nnf01.mtn"
+      },
+      {
+        "file": "mts_nnf02.mtn"
+      },
+      {
+        "file": "mts_nnf03.mtn"
+      },
+      {
+        "file": "mts_nnf04.mtn"
+      },
+      {
+        "file": "mts_nnf05.mtn"
+      },
+      {
+        "file": "mts_nnf_left01.mtn"
+      },
+      {
+        "file": "mts_nnf_right01.mtn"
+      },
+      {
+        "file": "mts_sad01.mtn"
+      },
+      {
+        "file": "mts_sad02.mtn"
+      },
+      {
+        "file": "mts_sad03.mtn"
+      },
+      {
+        "file": "mts_smile01.mtn"
+      },
+      {
+        "file": "mts_smile02.mtn"
+      },
+      {
+        "file": "mts_smile03.mtn"
+      },
+      {
+        "file": "nf01.mtn"
+      },
+      {
+        "file": "nf02.mtn"
+      },
+      {
+        "file": "nf03.mtn"
+      },
+      {
+        "file": "nf04.mtn"
+      },
+      {
+        "file": "nf05.mtn"
+      },
+      {
+        "file": "nf_left01.mtn"
+      },
+      {
+        "file": "nf_right01.mtn"
+      },
+      {
+        "file": "nnf01.mtn"
+      },
+      {
+        "file": "nnf02.mtn"
+      },
+      {
+        "file": "nnf03.mtn"
+      },
+      {
+        "file": "nnf04.mtn"
+      },
+      {
+        "file": "nnf05.mtn"
+      },
+      {
+        "file": "nnf_left01.mtn"
+      },
+      {
+        "file": "nnf_right01.mtn"
+      },
+      {
+        "file": "odoodo01.mtn"
+      },
+      {
+        "file": "sad01.mtn"
+      },
+      {
+        "file": "sad02.mtn"
+      },
+      {
+        "file": "sad03.mtn"
+      },
+      {
+        "file": "sad04.mtn"
+      },
+      {
+        "file": "smile01.mtn"
+      },
+      {
+        "file": "smile02.mtn"
+      },
+      {
+        "file": "smile04.mtn"
+      },
+      {
+        "file": "surprised01.mtn"
+      },
+      {
+        "file": "surprised02.mtn"
+      },
+      {
+        "file": "thinking01.mtn"
+      }
+    ]
+  },
+  "expressions": [
+    {
+      "file": "angry01.exp.json"
+    },
+    {
+      "file": "default.exp.json"
+    },
+    {
+      "file": "idle01.exp.json"
+    },
+    {
+      "file": "mts_angry01.exp.json"
+    },
+    {
+      "file": "mts_angry02.exp.json"
+    },
+    {
+      "file": "mts_cry01.exp.json"
+    },
+    {
+      "file": "mts_default.exp.json"
+    },
+    {
+      "file": "mts_sad01.exp.json"
+    },
+    {
+      "file": "mts_sad02.exp.json"
+    },
+    {
+      "file": "mts_sad03.exp.json"
+    },
+    {
+      "file": "mts_smile01.exp.json"
+    },
+    {
+      "file": "mts_smile02.exp.json"
+    },
+    {
+      "file": "sad01.exp.json"
+    },
+    {
+      "file": "sad04.exp.json"
+    },
+    {
+      "file": "smile01.exp.json"
+    },
+    {
+      "file": "smile02.exp.json"
+    },
+    {
+      "file": "smile04.exp.json"
+    },
+    {
+      "file": "surprised01.exp.json"
+    }
+  ]
+}
