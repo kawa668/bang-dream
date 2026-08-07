@@ -1,5 +1,7 @@
 import { Live2DRenderer } from './live2d'
 import { fetchModelManifest } from './models'
+import { mapTrackingToParams } from './tracking/paramMapper'
+import { ParamSmoother } from './tracking/smoother'
 import { MediaPipeTracker } from './tracking/mediapipeTracker'
 
 async function startCamera(): Promise<HTMLVideoElement> {
@@ -27,14 +29,17 @@ async function main(): Promise<void> {
 
   const video = await startCamera()
   const tracker = new MediaPipeTracker()
-  tracker.start(video, (frame) => {
-    console.log('tracking frame', frame.face?.landmarks.length, frame.hands?.length)
-  }, {
-    enableFace: true,
-    enableHands: true,
-    inputWidth: 1280,
-    inputHeight: 720
-  })
+  const smoother = new ParamSmoother(0.35)
+  tracker.start(
+    video,
+    (frame) => renderer.setParams(smoother.update(mapTrackingToParams(frame))),
+    {
+      enableFace: true,
+      enableHands: true,
+      inputWidth: 1280,
+      inputHeight: 720
+    }
+  )
 }
 
 main().catch((error) => {
