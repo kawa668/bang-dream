@@ -4,6 +4,20 @@ import { ModelManager } from './modelManager'
 import { mapTrackingToParams } from './tracking/paramMapper'
 import { ParamSmoother } from './tracking/smoother'
 import { MediaPipeTracker } from './tracking/mediapipeTracker'
+import { QualityController, type QualityLevel } from './tracking/quality'
+
+function optionsForLevel(level: QualityLevel) {
+  if (level === 'minimal') {
+    return { enableFace: false, enableHands: false, inputWidth: 320, inputHeight: 180 }
+  }
+  if (level === 'face-only') {
+    return { enableFace: true, enableHands: false, inputWidth: 480, inputHeight: 270 }
+  }
+  if (level === 'lite') {
+    return { enableFace: true, enableHands: true, inputWidth: 480, inputHeight: 270 }
+  }
+  return { enableFace: true, enableHands: true, inputWidth: 1280, inputHeight: 720 }
+}
 
 async function main(): Promise<void> {
   const canvas = document.querySelector<HTMLCanvasElement>('#live2d-canvas')
@@ -42,17 +56,30 @@ async function main(): Promise<void> {
 
   const tracker = new MediaPipeTracker()
   const smoother = new ParamSmoother(0.35)
-  tracker.start(
-    video,
-    (frame) => renderer.setParams(smoother.update(mapTrackingToParams(frame))),
-    {
-      enableFace: true,
-      enableHands: true,
-      inputWidth: 1280,
-      inputHeight: 720
-    }
-  )
+  const quality = new QualityController()
+  const onFrame = (frame) => renderer.setParams(smoother.update(mapTrackingToParams(frame)))
+  let currentLevel = quality.getLevel()
+  let currentOptions = optionsForLevel(currentLevel)
+  tracker.start(video, onFrame, currentOptions)
   window.api.reportStatus('动捕运行中')
+
+  let lastTime = performance.now()
+  let fps = 60
+  const tick = (): void => {
+    const now = performance.now()
+    fps = 1000 / Math.max(now - lastTime, 1)
+    lastTime = now
+    const level = quality.update(fps)
+    if (level !== currentLevel) {
+      currentLevel = level
+      currentOptions = optionsForLevel(level)
+      tracker.stop()
+      tracker.start(video, onFrame, currentOptions)
+      window.api.reportStatus(`性能档位：${level}`)
+    }
+    requestAnimationFrame(tick)
+  }
+  requestAnimationFrame(tick)
 
   const localShortcutIds: OutfitId[] = ['casual', 'event', 'school_summer', 'school_winter']
   window.addEventListener('keydown', (event) => {
