@@ -3,8 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <title>若叶睦控制台</title>
+    <style>
+      body { font-family: system-ui, sans-serif; padding: 16px; }
+      #status { white-space: pre-wrap; }
+    </style>
   </head>
   <body>
     <h1>若叶睦控制台</h1>
+    <p>热键：F1-F4 切换服装；聚焦时 1-4 也可切换</p>
+    <p id="status">正在启动...</p>
+    <script type="module" src="/src/control.ts"></script>
   </body>
 </html>
