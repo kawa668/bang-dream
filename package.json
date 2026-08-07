@@ -1,0 +1,30 @@
+{
+  "name": "live2d-mutsumi-streaming",
+  "version": "0.1.0",
+  "private": true,
+  "main": "out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "test": "vitest run",
+    "prepare:models": "tsx scripts/prepare-models.ts"
+  },
+  "dependencies": {
+    "@mediapipe/tasks-vision": "^0.10.11",
+    "pixi-live2d-display": "0.4.0",
+    "pixi.js": "^6.5.10"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "electron": "^37.0.0",
+    "electron-vite": "^3.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  },
+  "allowScripts": {
+    "electron@37.10.3": true,
+    "esbuild@0.25.12": true,
+    "esbuild@0.28.1": true
+  }
+}
