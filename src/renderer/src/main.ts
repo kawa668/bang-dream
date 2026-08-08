@@ -140,7 +140,7 @@ async function main(): Promise<void> {
     if (Date.now() < manualActionUntil || contextMenuOpen) return
     const action = renderer.playRandomMotion()
     if (action) window.api.reportStatus(`动作：${action}`)
-  }, 6000)
+  }, 15000)
 
   const localShortcutIds: OutfitId[] = ['casual', 'event', 'school_summer', 'school_winter']
   const switchModel = (id: OutfitId): void => {
