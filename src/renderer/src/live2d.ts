@@ -52,19 +52,23 @@ export class Live2DRenderer {
 
   playMotion(group: string): boolean {
     const manager = this.model?.internalModel.motionManager as {
-      groups?: Record<string, unknown>
+      definitions?: Record<string, unknown>
+      motionGroups?: Record<string, unknown>
     } | null
-    if (!manager?.groups || !(group in manager.groups)) return false
+    const definitions = manager?.definitions ?? manager?.motionGroups
+    if (!definitions || !(group in definitions)) return false
     this.model?.motion(group)
     return true
   }
 
   playRandomMotion(): string | null {
     const manager = this.model?.internalModel.motionManager as {
-      groups?: Record<string, unknown>
+      definitions?: Record<string, unknown>
+      motionGroups?: Record<string, unknown>
     } | null
-    if (!manager?.groups) return null
-    const groups = Object.keys(manager.groups).filter((group) => group !== 'idle' && group !== 'tap_body')
+    const definitions = manager?.definitions ?? manager?.motionGroups
+    if (!definitions) return null
+    const groups = Object.keys(definitions).filter((group) => group !== 'idle' && group !== 'tap_body')
     if (groups.length === 0) return null
     const group = groups[Math.floor(Math.random() * groups.length)]
     this.model?.motion(group)
