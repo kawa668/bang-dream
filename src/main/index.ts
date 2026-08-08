@@ -6,8 +6,8 @@ import { app, BrowserWindow, globalShortcut, ipcMain, screen } from 'electron'
 const SHORTCUTS: Array<[string, string]> = [
   ['F1', 'casual'],
   ['F2', 'event'],
-  ['F3', 'school_summer'],
-  ['F4', 'school_winter']
+  ['F3', '037_casual-2023'],
+  ['F4', '037_birthday_2024_ssr']
 ]
 
 let outputWindow: BrowserWindow | null = null
