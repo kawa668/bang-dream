@@ -76,6 +76,22 @@ export class Live2DRenderer {
     return group
   }
 
+  getAvailableActions(): string[] {
+    const manager = this.model?.internalModel.motionManager as {
+      definitions?: Record<string, unknown>
+      motionGroups?: Record<string, unknown>
+    } | null
+    const definitions = manager?.definitions ?? manager?.motionGroups
+    return Object.keys(definitions ?? {})
+      .filter((group) => group !== 'idle' && group !== 'tap_body')
+      .sort()
+  }
+
+  hitTest(clientX: number, clientY: number): boolean {
+    const rect = this.canvas.getBoundingClientRect()
+    return this.isInsideModel({ x: clientX - rect.left, y: clientY - rect.top })
+  }
+
   private toCanvasPoint(event: PointerEvent): { x: number; y: number } {
     const rect = this.canvas.getBoundingClientRect()
     return { x: event.clientX - rect.left, y: event.clientY - rect.top }

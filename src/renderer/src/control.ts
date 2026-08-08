@@ -1,4 +1,5 @@
 import type { ModelDescriptor, OutfitId } from '../../shared/types'
+import { groupModelsByCharacter } from '../../shared/modelCategories'
 
 const status = document.querySelector<HTMLParagraphElement>('#status')
 const actionSelect = document.querySelector<HTMLSelectElement>('#action-select')
@@ -21,12 +22,31 @@ async function renderModelButtons(): Promise<void> {
   await ensureManifest()
   if (!modelButtons) return
   modelButtons.innerHTML = ''
-  for (const model of manifestByModel.values()) {
-    const button = document.createElement('button')
-    button.dataset.modelId = model.id
-    button.textContent = model.displayName
-    button.addEventListener('click', () => window.api.requestModelSwitch(model.id))
-    modelButtons.appendChild(button)
+  for (const characterGroup of groupModelsByCharacter([...manifestByModel.values()])) {
+    const heading = document.createElement('h3')
+    heading.textContent = characterGroup.character
+    modelButtons.appendChild(heading)
+
+    for (const category of characterGroup.categories) {
+      const categoryElement = document.createElement('div')
+      categoryElement.className = 'model-category'
+      const title = document.createElement('span')
+      title.className = 'category-title'
+      title.textContent = category.title
+      const buttonGroup = document.createElement('div')
+      buttonGroup.className = 'category-buttons'
+      categoryElement.appendChild(title)
+      categoryElement.appendChild(buttonGroup)
+      modelButtons.appendChild(categoryElement)
+
+      for (const model of category.models) {
+        const button = document.createElement('button')
+        button.dataset.modelId = model.id
+        button.textContent = model.displayName.replace(/^(若叶睦|千早爱音)·/, '')
+        button.addEventListener('click', () => window.api.requestModelSwitch(model.id))
+        buttonGroup.appendChild(button)
+      }
+    }
   }
   for (const button of modelButtons.querySelectorAll<HTMLButtonElement>('button')) {
     button.classList.toggle('active', button.dataset.modelId === currentModel)

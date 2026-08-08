@@ -12,6 +12,7 @@ declare global {
       requestModelSwitch: (id: OutfitId) => void
       reportModelBounds: (bounds: { x: number; y: number; width: number; height: number }) => void
       reportDragging: (dragging: boolean) => void
+      reportMenuOpen: (open: boolean) => void
     }
   }
 }

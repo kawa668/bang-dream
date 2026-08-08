@@ -14,6 +14,7 @@ let outputWindow: BrowserWindow | null = null
 let controlWindow: BrowserWindow | null = null
 let modelBounds: { x: number; y: number; width: number; height: number } | null = null
 let isDragging = false
+let isMenuOpen = false
 let mouseInterceptEnabled = false
 
 function createOutputWindow(): BrowserWindow {
@@ -95,6 +96,10 @@ app.whenReady().then(() => {
     isDragging = dragging
   })
 
+  ipcMain.on('menu-state', (_event, open: boolean) => {
+    isMenuOpen = open
+  })
+
   setInterval(() => {
     if (!outputWindow || !modelBounds) return
     const cursor = screen.getCursorScreenPoint()
@@ -107,7 +112,7 @@ app.whenReady().then(() => {
       && cursor.x <= right
       && cursor.y >= top
       && cursor.y <= bottom
-    const shouldIntercept = inside || isDragging
+    const shouldIntercept = inside || isDragging || isMenuOpen
     if (shouldIntercept !== mouseInterceptEnabled) {
       mouseInterceptEnabled = shouldIntercept
       outputWindow.setIgnoreMouseEvents(!shouldIntercept)
