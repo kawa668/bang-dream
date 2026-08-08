@@ -5,12 +5,16 @@
     <title>若叶睦控制台</title>
     <style>
       body { font-family: system-ui, sans-serif; padding: 16px; }
+      #model-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+      #model-buttons button { padding: 6px 10px; cursor: pointer; }
+      #model-buttons button.active { font-weight: 700; outline: 2px solid #2f6feb; }
       #status { white-space: pre-wrap; }
     </style>
   </head>
   <body>
     <h1>若叶睦控制台</h1>
     <p>热键：F1-F4 切换服装；聚焦时 1-4 也可切换</p>
+    <div id="model-buttons"></div>
     <label for="action-select">指定动作</label>
     <select id="action-select">
       <option value="">选择动作</option>

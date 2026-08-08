@@ -25,6 +25,9 @@ const api = {
   },
   reportModel: (id: OutfitId): void => {
     ipcRenderer.send('model:changed', id)
+  },
+  requestModelSwitch: (id: OutfitId): void => {
+    ipcRenderer.send('model:switch-request', id)
   }
 }
 
