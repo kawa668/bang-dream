@@ -1,5 +1,5 @@
 import * as PIXI from 'pixi.js'
-import { Live2DModel } from 'pixi-live2d-display/cubism2'
+import { Live2DModel, MotionPriority } from 'pixi-live2d-display/cubism2'
 
 declare global {
   interface Window { PIXI: typeof PIXI }
@@ -58,7 +58,7 @@ export class Live2DRenderer {
     } | null
     const definitions = manager?.definitions ?? manager?.motionGroups
     if (!definitions || !(group in definitions)) return false
-    this.model?.motion(group)
+    this.model?.motion(group, undefined, MotionPriority.FORCE)
     return true
   }
 
