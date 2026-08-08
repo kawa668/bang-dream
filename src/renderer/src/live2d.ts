@@ -39,6 +39,15 @@ export class Live2DRenderer {
     }
   }
 
+  playMotion(group: string): boolean {
+    const manager = this.model?.internalModel.motionManager as {
+      groups?: Record<string, unknown>
+    } | null
+    if (!manager?.groups || !(group in manager.groups)) return false
+    this.model?.motion(group)
+    return true
+  }
+
   private resize(): void {
     const width = window.innerWidth
     const height = window.innerHeight

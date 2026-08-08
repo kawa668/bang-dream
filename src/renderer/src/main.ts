@@ -4,6 +4,7 @@ import { ModelManager } from './modelManager'
 import { mapTrackingToParams } from './tracking/paramMapper'
 import { ParamSmoother } from './tracking/smoother'
 import { MediaPipeTracker } from './tracking/mediapipeTracker'
+import { MotionTrigger } from './tracking/motionTrigger'
 import { QualityController, type QualityLevel } from './tracking/quality'
 
 function optionsForLevel(level: QualityLevel) {
@@ -56,8 +57,22 @@ async function main(): Promise<void> {
 
   const tracker = new MediaPipeTracker()
   const smoother = new ParamSmoother(0.35)
+  const motionTrigger = new MotionTrigger()
+  let motionLockUntil = 0
   const quality = new QualityController()
-  const onFrame = (frame) => renderer.setParams(smoother.update(mapTrackingToParams(frame)))
+  const onFrame = (frame) => {
+    const now = Date.now()
+    if (now < motionLockUntil) return
+
+    const motion = motionTrigger.update(frame)
+    if (motion && renderer.playMotion(motion)) {
+      motionLockUntil = now + 2500
+      window.api.reportStatus(`动作：${motion}`)
+      return
+    }
+
+    renderer.setParams(smoother.update(mapTrackingToParams(frame)))
+  }
   let currentLevel = quality.getLevel()
   let currentOptions = optionsForLevel(currentLevel)
   tracker.start(video, onFrame, currentOptions)

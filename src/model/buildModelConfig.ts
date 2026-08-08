@@ -32,7 +32,13 @@ export function createCubism2ModelJson(
     const tapBody = motionFiles.filter((name) => !name.includes('idle'))
     result.motions = {}
     if (idle.length > 0) result.motions.idle = idle.map((file) => ({ file }))
-    if (tapBody.length > 0) result.motions.tap_body = tapBody.map((file) => ({ file }))
+    if (tapBody.length > 0) {
+      result.motions.tap_body = tapBody.map((file) => ({ file }))
+      for (const file of tapBody) {
+        const group = file.replace(/\.mtn$/, '')
+        result.motions[group] = [{ file }]
+      }
+    }
   }
 
   const expressions = data.Base.expressions

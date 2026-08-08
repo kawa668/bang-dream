@@ -264,6 +264,416 @@
       {
         "file": "thinking01.mtn"
       }
+    ],
+    "angry01": [
+      {
+        "file": "angry01.mtn"
+      }
+    ],
+    "bow": [
+      {
+        "file": "bow.mtn"
+      }
+    ],
+    "bye01": [
+      {
+        "file": "bye01.mtn"
+      }
+    ],
+    "kime01": [
+      {
+        "file": "kime01.mtn"
+      }
+    ],
+    "maskon_angry01": [
+      {
+        "file": "maskon_angry01.mtn"
+      }
+    ],
+    "maskon_bow": [
+      {
+        "file": "maskon_bow.mtn"
+      }
+    ],
+    "maskon_bye01": [
+      {
+        "file": "maskon_bye01.mtn"
+      }
+    ],
+    "maskon_kime01": [
+      {
+        "file": "maskon_kime01.mtn"
+      }
+    ],
+    "maskon_nf01": [
+      {
+        "file": "maskon_nf01.mtn"
+      }
+    ],
+    "maskon_nf02": [
+      {
+        "file": "maskon_nf02.mtn"
+      }
+    ],
+    "maskon_nf03": [
+      {
+        "file": "maskon_nf03.mtn"
+      }
+    ],
+    "maskon_nf04": [
+      {
+        "file": "maskon_nf04.mtn"
+      }
+    ],
+    "maskon_nf05": [
+      {
+        "file": "maskon_nf05.mtn"
+      }
+    ],
+    "maskon_nf_left01": [
+      {
+        "file": "maskon_nf_left01.mtn"
+      }
+    ],
+    "maskon_nf_right01": [
+      {
+        "file": "maskon_nf_right01.mtn"
+      }
+    ],
+    "maskon_nnf01": [
+      {
+        "file": "maskon_nnf01.mtn"
+      }
+    ],
+    "maskon_nnf02": [
+      {
+        "file": "maskon_nnf02.mtn"
+      }
+    ],
+    "maskon_nnf03": [
+      {
+        "file": "maskon_nnf03.mtn"
+      }
+    ],
+    "maskon_nnf04": [
+      {
+        "file": "maskon_nnf04.mtn"
+      }
+    ],
+    "maskon_nnf05": [
+      {
+        "file": "maskon_nnf05.mtn"
+      }
+    ],
+    "maskon_nnf_left01": [
+      {
+        "file": "maskon_nnf_left01.mtn"
+      }
+    ],
+    "maskon_nnf_right01": [
+      {
+        "file": "maskon_nnf_right01.mtn"
+      }
+    ],
+    "maskon_odoodo01": [
+      {
+        "file": "maskon_odoodo01.mtn"
+      }
+    ],
+    "maskon_sad01": [
+      {
+        "file": "maskon_sad01.mtn"
+      }
+    ],
+    "maskon_sad02": [
+      {
+        "file": "maskon_sad02.mtn"
+      }
+    ],
+    "maskon_sad03": [
+      {
+        "file": "maskon_sad03.mtn"
+      }
+    ],
+    "maskon_sad04": [
+      {
+        "file": "maskon_sad04.mtn"
+      }
+    ],
+    "maskon_smile01": [
+      {
+        "file": "maskon_smile01.mtn"
+      }
+    ],
+    "maskon_smile02": [
+      {
+        "file": "maskon_smile02.mtn"
+      }
+    ],
+    "maskon_smile04": [
+      {
+        "file": "maskon_smile04.mtn"
+      }
+    ],
+    "maskon_surprised01": [
+      {
+        "file": "maskon_surprised01.mtn"
+      }
+    ],
+    "maskon_thinking01": [
+      {
+        "file": "maskon_thinking01.mtn"
+      }
+    ],
+    "mts_angry01": [
+      {
+        "file": "mts_angry01.mtn"
+      }
+    ],
+    "mts_angry02": [
+      {
+        "file": "mts_angry02.mtn"
+      }
+    ],
+    "mts_angry03": [
+      {
+        "file": "mts_angry03.mtn"
+      }
+    ],
+    "mts_angry04": [
+      {
+        "file": "mts_angry04.mtn"
+      }
+    ],
+    "mts_cry01": [
+      {
+        "file": "mts_cry01.mtn"
+      }
+    ],
+    "mts_nf01": [
+      {
+        "file": "mts_nf01.mtn"
+      }
+    ],
+    "mts_nf02": [
+      {
+        "file": "mts_nf02.mtn"
+      }
+    ],
+    "mts_nf03": [
+      {
+        "file": "mts_nf03.mtn"
+      }
+    ],
+    "mts_nf04": [
+      {
+        "file": "mts_nf04.mtn"
+      }
+    ],
+    "mts_nf05": [
+      {
+        "file": "mts_nf05.mtn"
+      }
+    ],
+    "mts_nf_left01": [
+      {
+        "file": "mts_nf_left01.mtn"
+      }
+    ],
+    "mts_nf_right01": [
+      {
+        "file": "mts_nf_right01.mtn"
+      }
+    ],
+    "mts_nnf01": [
+      {
+        "file": "mts_nnf01.mtn"
+      }
+    ],
+    "mts_nnf02": [
+      {
+        "file": "mts_nnf02.mtn"
+      }
+    ],
+    "mts_nnf03": [
+      {
+        "file": "mts_nnf03.mtn"
+      }
+    ],
+    "mts_nnf04": [
+      {
+        "file": "mts_nnf04.mtn"
+      }
+    ],
+    "mts_nnf05": [
+      {
+        "file": "mts_nnf05.mtn"
+      }
+    ],
+    "mts_nnf_left01": [
+      {
+        "file": "mts_nnf_left01.mtn"
+      }
+    ],
+    "mts_nnf_right01": [
+      {
+        "file": "mts_nnf_right01.mtn"
+      }
+    ],
+    "mts_sad01": [
+      {
+        "file": "mts_sad01.mtn"
+      }
+    ],
+    "mts_sad02": [
+      {
+        "file": "mts_sad02.mtn"
+      }
+    ],
+    "mts_sad03": [
+      {
+        "file": "mts_sad03.mtn"
+      }
+    ],
+    "mts_smile01": [
+      {
+        "file": "mts_smile01.mtn"
+      }
+    ],
+    "mts_smile02": [
+      {
+        "file": "mts_smile02.mtn"
+      }
+    ],
+    "mts_smile03": [
+      {
+        "file": "mts_smile03.mtn"
+      }
+    ],
+    "nf01": [
+      {
+        "file": "nf01.mtn"
+      }
+    ],
+    "nf02": [
+      {
+        "file": "nf02.mtn"
+      }
+    ],
+    "nf03": [
+      {
+        "file": "nf03.mtn"
+      }
+    ],
+    "nf04": [
+      {
+        "file": "nf04.mtn"
+      }
+    ],
+    "nf05": [
+      {
+        "file": "nf05.mtn"
+      }
+    ],
+    "nf_left01": [
+      {
+        "file": "nf_left01.mtn"
+      }
+    ],
+    "nf_right01": [
+      {
+        "file": "nf_right01.mtn"
+      }
+    ],
+    "nnf01": [
+      {
+        "file": "nnf01.mtn"
+      }
+    ],
+    "nnf02": [
+      {
+        "file": "nnf02.mtn"
+      }
+    ],
+    "nnf03": [
+      {
+        "file": "nnf03.mtn"
+      }
+    ],
+    "nnf04": [
+      {
+        "file": "nnf04.mtn"
+      }
+    ],
+    "nnf05": [
+      {
+        "file": "nnf05.mtn"
+      }
+    ],
+    "nnf_left01": [
+      {
+        "file": "nnf_left01.mtn"
+      }
+    ],
+    "nnf_right01": [
+      {
+        "file": "nnf_right01.mtn"
+      }
+    ],
+    "odoodo01": [
+      {
+        "file": "odoodo01.mtn"
+      }
+    ],
+    "sad01": [
+      {
+        "file": "sad01.mtn"
+      }
+    ],
+    "sad02": [
+      {
+        "file": "sad02.mtn"
+      }
+    ],
+    "sad03": [
+      {
+        "file": "sad03.mtn"
+      }
+    ],
+    "sad04": [
+      {
+        "file": "sad04.mtn"
+      }
+    ],
+    "smile01": [
+      {
+        "file": "smile01.mtn"
+      }
+    ],
+    "smile02": [
+      {
+        "file": "smile02.mtn"
+      }
+    ],
+    "smile04": [
+      {
+        "file": "smile04.mtn"
+      }
+    ],
+    "surprised01": [
+      {
+        "file": "surprised01.mtn"
+      }
+    ],
+    "surprised02": [
+      {
+        "file": "surprised02.mtn"
+      }
+    ],
+    "thinking01": [
+      {
+        "file": "thinking01.mtn"
+      }
     ]
   },
   "expressions": [
