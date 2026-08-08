@@ -13,6 +13,7 @@ export class Live2DRenderer {
   private dragPointerId = -1
   private dragOffsetX = 0
   private dragOffsetY = 0
+  private hoverDragMode = false
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas
@@ -29,6 +30,7 @@ export class Live2DRenderer {
     this.canvas.addEventListener('pointermove', this.onPointerMove)
     this.canvas.addEventListener('pointerup', this.onPointerUp)
     this.canvas.addEventListener('pointercancel', this.onPointerUp)
+    this.canvas.addEventListener('pointerleave', this.onPointerLeave)
     window.addEventListener('resize', () => this.resize())
     this.resize()
   }
@@ -80,16 +82,28 @@ export class Live2DRenderer {
     return { x: event.clientX - rect.left, y: event.clientY - rect.top }
   }
 
-  private onPointerDown = (event: PointerEvent): void => {
-    if (!this.model) return
-    const point = this.toCanvasPoint(event)
+  private isInsideModel(point: { x: number; y: number }): boolean {
+    if (!this.model) return false
     const bounds = this.model.getBounds()
-    const inside = point.x >= bounds.x
+    return point.x >= bounds.x
       && point.x <= bounds.x + bounds.width
       && point.y >= bounds.y
       && point.y <= bounds.y + bounds.height
+  }
+
+  private updateDragMode(enabled: boolean): void {
+    if (this.hoverDragMode === enabled) return
+    this.hoverDragMode = enabled
+    window.api.setDragMode(enabled)
+  }
+
+  private onPointerDown = (event: PointerEvent): void => {
+    if (!this.model) return
+    const point = this.toCanvasPoint(event)
+    const inside = this.isInsideModel(point)
     if (!inside) return
 
+    this.updateDragMode(true)
     this.dragging = true
     this.dragPointerId = event.pointerId
     this.dragOffsetX = this.model.x - point.x
@@ -99,9 +113,12 @@ export class Live2DRenderer {
   }
 
   private onPointerMove = (event: PointerEvent): void => {
-    if (!this.dragging || event.pointerId !== this.dragPointerId || !this.model) return
     const point = this.toCanvasPoint(event)
-    this.model.position.set(point.x + this.dragOffsetX, point.y + this.dragOffsetY)
+    if (this.dragging && event.pointerId === this.dragPointerId && this.model) {
+      this.model.position.set(point.x + this.dragOffsetX, point.y + this.dragOffsetY)
+    } else {
+      this.updateDragMode(this.isInsideModel(point))
+    }
   }
 
   private onPointerUp = (event: PointerEvent): void => {
@@ -111,6 +128,11 @@ export class Live2DRenderer {
     if (this.canvas.hasPointerCapture(event.pointerId)) {
       this.canvas.releasePointerCapture(event.pointerId)
     }
+    this.updateDragMode(this.isInsideModel(this.toCanvasPoint(event)))
+  }
+
+  private onPointerLeave = (): void => {
+    if (!this.dragging) this.updateDragMode(false)
   }
 
   private resize(): void {
