@@ -48,7 +48,7 @@ function createControlWindow(): BrowserWindow {
   controlWindow = new BrowserWindow({
     width: 320,
     height: 420,
-    title: '若叶睦控制台',
+    title: '控制台',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,
