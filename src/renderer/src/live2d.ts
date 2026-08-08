@@ -8,8 +8,14 @@ declare global {
 export class Live2DRenderer {
   private app: PIXI.Application
   private model: Live2DModel | null = null
+  private readonly canvas: HTMLCanvasElement
+  private dragging = false
+  private dragPointerId = -1
+  private dragOffsetX = 0
+  private dragOffsetY = 0
 
   constructor(canvas: HTMLCanvasElement) {
+    this.canvas = canvas
     window.PIXI = PIXI
     this.app = new PIXI.Application({
       view: canvas,
@@ -18,6 +24,11 @@ export class Live2DRenderer {
       autoDensity: true,
       resolution: window.devicePixelRatio || 1
     })
+    this.canvas.style.touchAction = 'none'
+    this.canvas.addEventListener('pointerdown', this.onPointerDown)
+    this.canvas.addEventListener('pointermove', this.onPointerMove)
+    this.canvas.addEventListener('pointerup', this.onPointerUp)
+    this.canvas.addEventListener('pointercancel', this.onPointerUp)
     window.addEventListener('resize', () => this.resize())
     this.resize()
   }
@@ -46,6 +57,44 @@ export class Live2DRenderer {
     if (!manager?.groups || !(group in manager.groups)) return false
     this.model?.motion(group)
     return true
+  }
+
+  private toCanvasPoint(event: PointerEvent): { x: number; y: number } {
+    const rect = this.canvas.getBoundingClientRect()
+    return { x: event.clientX - rect.left, y: event.clientY - rect.top }
+  }
+
+  private onPointerDown = (event: PointerEvent): void => {
+    if (!this.model) return
+    const point = this.toCanvasPoint(event)
+    const bounds = this.model.getBounds()
+    const inside = point.x >= bounds.x
+      && point.x <= bounds.x + bounds.width
+      && point.y >= bounds.y
+      && point.y <= bounds.y + bounds.height
+    if (!inside) return
+
+    this.dragging = true
+    this.dragPointerId = event.pointerId
+    this.dragOffsetX = this.model.x - point.x
+    this.dragOffsetY = this.model.y - point.y
+    this.canvas.setPointerCapture(event.pointerId)
+    event.preventDefault()
+  }
+
+  private onPointerMove = (event: PointerEvent): void => {
+    if (!this.dragging || event.pointerId !== this.dragPointerId || !this.model) return
+    const point = this.toCanvasPoint(event)
+    this.model.position.set(point.x + this.dragOffsetX, point.y + this.dragOffsetY)
+  }
+
+  private onPointerUp = (event: PointerEvent): void => {
+    if (event.pointerId !== this.dragPointerId) return
+    this.dragging = false
+    this.dragPointerId = -1
+    if (this.canvas.hasPointerCapture(event.pointerId)) {
+      this.canvas.releasePointerCapture(event.pointerId)
+    }
   }
 
   private resize(): void {
