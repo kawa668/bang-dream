@@ -141,7 +141,8 @@ export class Live2DRenderer {
     this.app.renderer.resize(width, height)
     if (this.model) {
       const bounds = this.model.getBounds()
-      const scale = Math.min(width / Math.max(bounds.width, 1), height / Math.max(bounds.height, 1)) * 0.9
+      const targetHeight = Math.min(height * 0.45, 700)
+      const scale = Math.min(width / Math.max(bounds.width, 1), targetHeight / Math.max(bounds.height, 1))
       this.model.scale.set(scale)
       this.model.position.set(width / 2, height / 2)
       this.reportBounds()
