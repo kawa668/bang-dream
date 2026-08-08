@@ -1,12 +1,21 @@
 import { groupActions } from '../../shared/actionCategories'
 import { groupModelsByCharacter } from '../../shared/modelCategories'
-import type { OutfitId } from '../../shared/types'
+import type { ModelDescriptor, OutfitId } from '../../shared/types'
 import { Live2DRenderer } from './live2d'
 import { ModelManager } from './modelManager'
 import { fetchModelManifest } from './models'
 
+let manualActionUntil = 0
+let contextMenuOpen = false
+let modelManifestCache: ModelDescriptor[] | null = null
+
 function simplifiedName(displayName: string): string {
   return displayName.replace(/^(若叶睦|千早爱音)·/, '')
+}
+
+async function getModelManifest(): Promise<ModelDescriptor[]> {
+  if (!modelManifestCache) modelManifestCache = await fetchModelManifest()
+  return modelManifestCache
 }
 
 function createContextToggle(title: string, count: number, content: HTMLElement): HTMLButtonElement {
@@ -23,6 +32,7 @@ function createContextToggle(title: string, count: number, content: HTMLElement)
 
 function closeContextMenu(menu: HTMLDivElement): void {
   menu.classList.remove('visible')
+  contextMenuOpen = false
   window.api.reportMenuOpen(false)
 }
 
@@ -30,7 +40,7 @@ async function showContextMenu(clientX: number, clientY: number, renderer: Live2
   const menu = document.querySelector<HTMLDivElement>('#context-menu')
   if (!menu) return
 
-  const models = await fetchModelManifest()
+  const models = await getModelManifest()
   const actions = renderer.getAvailableActions()
   menu.innerHTML = ''
 
@@ -79,6 +89,7 @@ async function showContextMenu(clientX: number, clientY: number, renderer: Live2
       button.className = 'menu-item'
       button.textContent = action
       button.addEventListener('click', () => {
+        manualActionUntil = Date.now() + 8000
         renderer.playMotion(action)
         window.api.reportStatus(`动作：${action}`)
         closeContextMenu(menu)
@@ -91,6 +102,7 @@ async function showContextMenu(clientX: number, clientY: number, renderer: Live2
   menu.style.left = `${Math.min(clientX, window.innerWidth - 240)}px`
   menu.style.top = `${Math.min(clientY, window.innerHeight - 300)}px`
   menu.classList.add('visible')
+  contextMenuOpen = true
   window.api.reportMenuOpen(true)
 
   const close = (): void => {
@@ -124,9 +136,8 @@ async function main(): Promise<void> {
     void showContextMenu(event.clientX, event.clientY, renderer)
   })
 
-  let manualActionUntil = 0
   setInterval(() => {
-    if (Date.now() < manualActionUntil) return
+    if (Date.now() < manualActionUntil || contextMenuOpen) return
     const action = renderer.playRandomMotion()
     if (action) window.api.reportStatus(`动作：${action}`)
   }, 6000)
