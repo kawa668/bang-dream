@@ -5,6 +5,7 @@ import type { BuildDataAsset, Cubism2ModelJson, ModelDescriptor, OutfitId } from
 
 const SOURCE_ROOT = process.env['LIVE2D_SOURCE_ROOT'] ?? 'D:\\codex\\模型下载\\live2d\\338'
 const DEST_ROOT = process.env['LIVE2D_DEST_ROOT'] ?? 'src/renderer/public/models'
+const GENERAL_DIR = join(SOURCE_ROOT, '338_general')
 
 const OUTFITS: Array<{ id: OutfitId; displayName: string; dir: string }> = [
   { id: 'casual', displayName: '便装', dir: '338_casual-2023' },
@@ -13,8 +14,16 @@ const OUTFITS: Array<{ id: OutfitId; displayName: string; dir: string }> = [
   { id: 'school_winter', displayName: '冬季校服', dir: '338_school_winter-2023' }
 ]
 
-async function copyAsset(sourceDir: string, destDir: string, name: string): Promise<void> {
-  await copyFile(join(sourceDir, name), join(destDir, name))
+async function copyAsset(sourceDirs: string[], destDir: string, name: string): Promise<void> {
+  for (const sourceDir of sourceDirs) {
+    try {
+      await copyFile(join(sourceDir, name), join(destDir, name))
+      return
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
+    }
+  }
+  throw new Error(`Missing asset: ${name}`)
 }
 
 function registeredFiles(json: Cubism2ModelJson): string[] {
@@ -34,15 +43,17 @@ async function main(): Promise<void> {
   for (const outfit of OUTFITS) {
     const sourceDir = join(SOURCE_ROOT, outfit.dir)
     const destDir = join(DEST_ROOT, outfit.id)
+    const sourceDirs = [sourceDir, GENERAL_DIR]
     await mkdir(destDir, { recursive: true })
 
     const buildDataRaw = await readFile(join(sourceDir, 'buildData.asset'), 'utf8')
     const buildData = JSON.parse(buildDataRaw) as BuildDataAsset
-    const existingFiles = new Set(await readdir(sourceDir))
+    const generalFiles = await readdir(GENERAL_DIR).catch(() => [] as string[])
+    const existingFiles = new Set([...(await readdir(sourceDir)), ...generalFiles])
     const json = createCubism2ModelJson(buildData, existingFiles)
 
     for (const file of registeredFiles(json)) {
-      await copyAsset(sourceDir, destDir, file)
+      await copyAsset(sourceDirs, destDir, file)
     }
 
     await writeFile(join(destDir, 'model.json'), JSON.stringify(json, null, 2), 'utf8')

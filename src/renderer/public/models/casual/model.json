@@ -4,5 +4,532 @@
     "texture_00.png",
     "texture_01.png"
   ],
-  "physics": "mutsumi_casual-2023.physics.json"
+  "physics": "mutsumi_casual-2023.physics.json",
+  "motions": {
+    "idle": [
+      {
+        "file": "idle01.mtn"
+      },
+      {
+        "file": "mts_idle01.mtn"
+      }
+    ],
+    "tap_body": [
+      {
+        "file": "angry01.mtn"
+      },
+      {
+        "file": "bow.mtn"
+      },
+      {
+        "file": "bye01.mtn"
+      },
+      {
+        "file": "kime01.mtn"
+      },
+      {
+        "file": "mts_angry01.mtn"
+      },
+      {
+        "file": "mts_angry02.mtn"
+      },
+      {
+        "file": "mts_angry03.mtn"
+      },
+      {
+        "file": "mts_angry04.mtn"
+      },
+      {
+        "file": "mts_angry05.mtn"
+      },
+      {
+        "file": "mts_cry01.mtn"
+      },
+      {
+        "file": "mts_cry02.mtn"
+      },
+      {
+        "file": "mts_nf01.mtn"
+      },
+      {
+        "file": "mts_nf02.mtn"
+      },
+      {
+        "file": "mts_nf03.mtn"
+      },
+      {
+        "file": "mts_nf04.mtn"
+      },
+      {
+        "file": "mts_nf05.mtn"
+      },
+      {
+        "file": "mts_nf_left01.mtn"
+      },
+      {
+        "file": "mts_nf_right01.mtn"
+      },
+      {
+        "file": "mts_nnf01.mtn"
+      },
+      {
+        "file": "mts_nnf02.mtn"
+      },
+      {
+        "file": "mts_nnf03.mtn"
+      },
+      {
+        "file": "mts_nnf04.mtn"
+      },
+      {
+        "file": "mts_nnf05.mtn"
+      },
+      {
+        "file": "mts_nnf_left01.mtn"
+      },
+      {
+        "file": "mts_nnf_right01.mtn"
+      },
+      {
+        "file": "mts_sad01.mtn"
+      },
+      {
+        "file": "mts_sad02.mtn"
+      },
+      {
+        "file": "mts_sad03.mtn"
+      },
+      {
+        "file": "mts_smile01.mtn"
+      },
+      {
+        "file": "mts_smile02.mtn"
+      },
+      {
+        "file": "mts_smile03.mtn"
+      },
+      {
+        "file": "mts_surprised01.mtn"
+      },
+      {
+        "file": "nf01.mtn"
+      },
+      {
+        "file": "nf02.mtn"
+      },
+      {
+        "file": "nf03.mtn"
+      },
+      {
+        "file": "nf04.mtn"
+      },
+      {
+        "file": "nf05.mtn"
+      },
+      {
+        "file": "nf_left01.mtn"
+      },
+      {
+        "file": "nf_right01.mtn"
+      },
+      {
+        "file": "nnf01.mtn"
+      },
+      {
+        "file": "nnf02.mtn"
+      },
+      {
+        "file": "nnf03.mtn"
+      },
+      {
+        "file": "nnf04.mtn"
+      },
+      {
+        "file": "nnf05.mtn"
+      },
+      {
+        "file": "nnf_left01.mtn"
+      },
+      {
+        "file": "nnf_right01.mtn"
+      },
+      {
+        "file": "odoodo01.mtn"
+      },
+      {
+        "file": "sad01.mtn"
+      },
+      {
+        "file": "sad02.mtn"
+      },
+      {
+        "file": "sad03.mtn"
+      },
+      {
+        "file": "sad04.mtn"
+      },
+      {
+        "file": "smile01.mtn"
+      },
+      {
+        "file": "smile02.mtn"
+      },
+      {
+        "file": "smile04.mtn"
+      },
+      {
+        "file": "surprised01.mtn"
+      },
+      {
+        "file": "surprised02.mtn"
+      },
+      {
+        "file": "thinking01.mtn"
+      }
+    ],
+    "angry01": [
+      {
+        "file": "angry01.mtn"
+      }
+    ],
+    "bow": [
+      {
+        "file": "bow.mtn"
+      }
+    ],
+    "bye01": [
+      {
+        "file": "bye01.mtn"
+      }
+    ],
+    "kime01": [
+      {
+        "file": "kime01.mtn"
+      }
+    ],
+    "mts_angry01": [
+      {
+        "file": "mts_angry01.mtn"
+      }
+    ],
+    "mts_angry02": [
+      {
+        "file": "mts_angry02.mtn"
+      }
+    ],
+    "mts_angry03": [
+      {
+        "file": "mts_angry03.mtn"
+      }
+    ],
+    "mts_angry04": [
+      {
+        "file": "mts_angry04.mtn"
+      }
+    ],
+    "mts_angry05": [
+      {
+        "file": "mts_angry05.mtn"
+      }
+    ],
+    "mts_cry01": [
+      {
+        "file": "mts_cry01.mtn"
+      }
+    ],
+    "mts_cry02": [
+      {
+        "file": "mts_cry02.mtn"
+      }
+    ],
+    "mts_nf01": [
+      {
+        "file": "mts_nf01.mtn"
+      }
+    ],
+    "mts_nf02": [
+      {
+        "file": "mts_nf02.mtn"
+      }
+    ],
+    "mts_nf03": [
+      {
+        "file": "mts_nf03.mtn"
+      }
+    ],
+    "mts_nf04": [
+      {
+        "file": "mts_nf04.mtn"
+      }
+    ],
+    "mts_nf05": [
+      {
+        "file": "mts_nf05.mtn"
+      }
+    ],
+    "mts_nf_left01": [
+      {
+        "file": "mts_nf_left01.mtn"
+      }
+    ],
+    "mts_nf_right01": [
+      {
+        "file": "mts_nf_right01.mtn"
+      }
+    ],
+    "mts_nnf01": [
+      {
+        "file": "mts_nnf01.mtn"
+      }
+    ],
+    "mts_nnf02": [
+      {
+        "file": "mts_nnf02.mtn"
+      }
+    ],
+    "mts_nnf03": [
+      {
+        "file": "mts_nnf03.mtn"
+      }
+    ],
+    "mts_nnf04": [
+      {
+        "file": "mts_nnf04.mtn"
+      }
+    ],
+    "mts_nnf05": [
+      {
+        "file": "mts_nnf05.mtn"
+      }
+    ],
+    "mts_nnf_left01": [
+      {
+        "file": "mts_nnf_left01.mtn"
+      }
+    ],
+    "mts_nnf_right01": [
+      {
+        "file": "mts_nnf_right01.mtn"
+      }
+    ],
+    "mts_sad01": [
+      {
+        "file": "mts_sad01.mtn"
+      }
+    ],
+    "mts_sad02": [
+      {
+        "file": "mts_sad02.mtn"
+      }
+    ],
+    "mts_sad03": [
+      {
+        "file": "mts_sad03.mtn"
+      }
+    ],
+    "mts_smile01": [
+      {
+        "file": "mts_smile01.mtn"
+      }
+    ],
+    "mts_smile02": [
+      {
+        "file": "mts_smile02.mtn"
+      }
+    ],
+    "mts_smile03": [
+      {
+        "file": "mts_smile03.mtn"
+      }
+    ],
+    "mts_surprised01": [
+      {
+        "file": "mts_surprised01.mtn"
+      }
+    ],
+    "nf01": [
+      {
+        "file": "nf01.mtn"
+      }
+    ],
+    "nf02": [
+      {
+        "file": "nf02.mtn"
+      }
+    ],
+    "nf03": [
+      {
+        "file": "nf03.mtn"
+      }
+    ],
+    "nf04": [
+      {
+        "file": "nf04.mtn"
+      }
+    ],
+    "nf05": [
+      {
+        "file": "nf05.mtn"
+      }
+    ],
+    "nf_left01": [
+      {
+        "file": "nf_left01.mtn"
+      }
+    ],
+    "nf_right01": [
+      {
+        "file": "nf_right01.mtn"
+      }
+    ],
+    "nnf01": [
+      {
+        "file": "nnf01.mtn"
+      }
+    ],
+    "nnf02": [
+      {
+        "file": "nnf02.mtn"
+      }
+    ],
+    "nnf03": [
+      {
+        "file": "nnf03.mtn"
+      }
+    ],
+    "nnf04": [
+      {
+        "file": "nnf04.mtn"
+      }
+    ],
+    "nnf05": [
+      {
+        "file": "nnf05.mtn"
+      }
+    ],
+    "nnf_left01": [
+      {
+        "file": "nnf_left01.mtn"
+      }
+    ],
+    "nnf_right01": [
+      {
+        "file": "nnf_right01.mtn"
+      }
+    ],
+    "odoodo01": [
+      {
+        "file": "odoodo01.mtn"
+      }
+    ],
+    "sad01": [
+      {
+        "file": "sad01.mtn"
+      }
+    ],
+    "sad02": [
+      {
+        "file": "sad02.mtn"
+      }
+    ],
+    "sad03": [
+      {
+        "file": "sad03.mtn"
+      }
+    ],
+    "sad04": [
+      {
+        "file": "sad04.mtn"
+      }
+    ],
+    "smile01": [
+      {
+        "file": "smile01.mtn"
+      }
+    ],
+    "smile02": [
+      {
+        "file": "smile02.mtn"
+      }
+    ],
+    "smile04": [
+      {
+        "file": "smile04.mtn"
+      }
+    ],
+    "surprised01": [
+      {
+        "file": "surprised01.mtn"
+      }
+    ],
+    "surprised02": [
+      {
+        "file": "surprised02.mtn"
+      }
+    ],
+    "thinking01": [
+      {
+        "file": "thinking01.mtn"
+      }
+    ]
+  },
+  "expressions": [
+    {
+      "file": "angry01.exp.json"
+    },
+    {
+      "file": "default.exp.json"
+    },
+    {
+      "file": "idle01.exp.json"
+    },
+    {
+      "file": "mts_angry01.exp.json"
+    },
+    {
+      "file": "mts_angry02.exp.json"
+    },
+    {
+      "file": "mts_cry01.exp.json"
+    },
+    {
+      "file": "mts_default.exp.json"
+    },
+    {
+      "file": "mts_sad01.exp.json"
+    },
+    {
+      "file": "mts_sad02.exp.json"
+    },
+    {
+      "file": "mts_sad03.exp.json"
+    },
+    {
+      "file": "mts_smile01.exp.json"
+    },
+    {
+      "file": "mts_smile02.exp.json"
+    },
+    {
+      "file": "mts_surprised01.exp.json"
+    },
+    {
+      "file": "sad01.exp.json"
+    },
+    {
+      "file": "sad04.exp.json"
+    },
+    {
+      "file": "smile01.exp.json"
+    },
+    {
+      "file": "smile02.exp.json"
+    },
+    {
+      "file": "smile04.exp.json"
+    },
+    {
+      "file": "surprised01.exp.json"
+    }
+  ]
 }
