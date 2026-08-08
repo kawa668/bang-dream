@@ -13,7 +13,6 @@ export class Live2DRenderer {
   private dragPointerId = -1
   private dragOffsetX = 0
   private dragOffsetY = 0
-  private hoverDragMode = false
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas
@@ -30,7 +29,6 @@ export class Live2DRenderer {
     this.canvas.addEventListener('pointermove', this.onPointerMove)
     this.canvas.addEventListener('pointerup', this.onPointerUp)
     this.canvas.addEventListener('pointercancel', this.onPointerUp)
-    this.canvas.addEventListener('pointerleave', this.onPointerLeave)
     window.addEventListener('resize', () => this.resize())
     this.resize()
   }
@@ -42,6 +40,7 @@ export class Live2DRenderer {
     this.model = model
     this.app.stage.addChild(model)
     this.resize()
+    this.reportBounds()
   }
 
   setParams(params: Record<string, number>): void {
@@ -91,10 +90,15 @@ export class Live2DRenderer {
       && point.y <= bounds.y + bounds.height
   }
 
-  private updateDragMode(enabled: boolean): void {
-    if (this.hoverDragMode === enabled) return
-    this.hoverDragMode = enabled
-    window.api.setDragMode(enabled)
+  private reportBounds(): void {
+    if (!this.model) return
+    const bounds = this.model.getBounds()
+    window.api.reportModelBounds({
+      x: bounds.x,
+      y: bounds.y,
+      width: bounds.width,
+      height: bounds.height
+    })
   }
 
   private onPointerDown = (event: PointerEvent): void => {
@@ -103,7 +107,7 @@ export class Live2DRenderer {
     const inside = this.isInsideModel(point)
     if (!inside) return
 
-    this.updateDragMode(true)
+    window.api.reportDragging(true)
     this.dragging = true
     this.dragPointerId = event.pointerId
     this.dragOffsetX = this.model.x - point.x
@@ -116,8 +120,7 @@ export class Live2DRenderer {
     const point = this.toCanvasPoint(event)
     if (this.dragging && event.pointerId === this.dragPointerId && this.model) {
       this.model.position.set(point.x + this.dragOffsetX, point.y + this.dragOffsetY)
-    } else {
-      this.updateDragMode(this.isInsideModel(point))
+      this.reportBounds()
     }
   }
 
@@ -128,11 +131,8 @@ export class Live2DRenderer {
     if (this.canvas.hasPointerCapture(event.pointerId)) {
       this.canvas.releasePointerCapture(event.pointerId)
     }
-    this.updateDragMode(this.isInsideModel(this.toCanvasPoint(event)))
-  }
-
-  private onPointerLeave = (): void => {
-    if (!this.dragging) this.updateDragMode(false)
+    window.api.reportDragging(false)
+    this.reportBounds()
   }
 
   private resize(): void {
@@ -144,6 +144,7 @@ export class Live2DRenderer {
       const scale = Math.min(width / Math.max(bounds.width, 1), height / Math.max(bounds.height, 1)) * 0.9
       this.model.scale.set(scale)
       this.model.position.set(width / 2, height / 2)
+      this.reportBounds()
     }
   }
 

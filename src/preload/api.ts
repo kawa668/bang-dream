@@ -29,8 +29,11 @@ const api = {
   requestModelSwitch: (id: OutfitId): void => {
     ipcRenderer.send('model:switch-request', id)
   },
-  setDragMode: (enabled: boolean): void => {
-    ipcRenderer.send('drag-mode', enabled)
+  reportModelBounds: (bounds: { x: number; y: number; width: number; height: number }): void => {
+    ipcRenderer.send('model:bounds', bounds)
+  },
+  reportDragging: (dragging: boolean): void => {
+    ipcRenderer.send('drag-state', dragging)
   }
 }
 

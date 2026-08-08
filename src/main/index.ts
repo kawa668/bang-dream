@@ -12,6 +12,9 @@ const SHORTCUTS: Array<[string, string]> = [
 
 let outputWindow: BrowserWindow | null = null
 let controlWindow: BrowserWindow | null = null
+let modelBounds: { x: number; y: number; width: number; height: number } | null = null
+let isDragging = false
+let mouseInterceptEnabled = false
 
 function createOutputWindow(): BrowserWindow {
   const { workArea } = screen.getPrimaryDisplay()
@@ -32,7 +35,7 @@ function createOutputWindow(): BrowserWindow {
       nodeIntegration: false
     }
   })
-  outputWindow.setIgnoreMouseEvents(true, { forward: true })
+  outputWindow.setIgnoreMouseEvents(true)
 
   const devUrl = process.env['ELECTRON_RENDERER_URL']
   if (devUrl) outputWindow.loadURL(devUrl)
@@ -84,9 +87,32 @@ app.whenReady().then(() => {
     outputWindow?.webContents.send('model:switch', id)
   })
 
-  ipcMain.on('drag-mode', (_event, enabled: boolean) => {
-    outputWindow?.setIgnoreMouseEvents(!enabled)
+  ipcMain.on('model:bounds', (_event, bounds: { x: number; y: number; width: number; height: number }) => {
+    modelBounds = bounds
   })
+
+  ipcMain.on('drag-state', (_event, dragging: boolean) => {
+    isDragging = dragging
+  })
+
+  setInterval(() => {
+    if (!outputWindow || !modelBounds) return
+    const cursor = screen.getCursorScreenPoint()
+    const winBounds = outputWindow.getBounds()
+    const left = winBounds.x + modelBounds.x
+    const top = winBounds.y + modelBounds.y
+    const right = left + modelBounds.width
+    const bottom = top + modelBounds.height
+    const inside = cursor.x >= left
+      && cursor.x <= right
+      && cursor.y >= top
+      && cursor.y <= bottom
+    const shouldIntercept = inside || isDragging
+    if (shouldIntercept !== mouseInterceptEnabled) {
+      mouseInterceptEnabled = shouldIntercept
+      outputWindow.setIgnoreMouseEvents(!shouldIntercept)
+    }
+  }, 30)
 
   for (const [accelerator, id] of SHORTCUTS) {
     const ok = globalShortcut.register(accelerator, () => {
