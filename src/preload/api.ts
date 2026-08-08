@@ -28,6 +28,9 @@ const api = {
   },
   requestModelSwitch: (id: OutfitId): void => {
     ipcRenderer.send('model:switch-request', id)
+  },
+  setDragMode: (enabled: boolean): void => {
+    ipcRenderer.send('drag-mode', enabled)
   }
 }
 

@@ -4,6 +4,8 @@ const status = document.querySelector<HTMLParagraphElement>('#status')
 const actionSelect = document.querySelector<HTMLSelectElement>('#action-select')
 const playActionButton = document.querySelector<HTMLButtonElement>('#play-action')
 const modelButtons = document.querySelector<HTMLDivElement>('#model-buttons')
+const dragModeButton = document.querySelector<HTMLButtonElement>('#drag-mode')
+let dragMode = false
 
 const manifestByModel = new Map<OutfitId, ModelDescriptor>()
 const actionsByModel = new Map<OutfitId, string[]>()
@@ -80,6 +82,15 @@ async function renderActions(id: OutfitId): Promise<void> {
 playActionButton?.addEventListener('click', () => {
   const action = actionSelect?.value
   if (action) window.api.playAction(action)
+})
+
+dragModeButton?.addEventListener('click', () => {
+  dragMode = !dragMode
+  window.api.setDragMode(dragMode)
+  dragModeButton.textContent = dragMode ? '退出拖动' : '拖动模式'
+  if (status) {
+    status.textContent = dragMode ? '拖动模式：在模型窗口按住模型拖动' : '点击穿透已开启'
+  }
 })
 
 window.api.onModelSwitch((id) => {

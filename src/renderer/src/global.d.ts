@@ -10,6 +10,7 @@ declare global {
       onActionPlay: (callback: (action: string) => void) => () => void
       reportModel: (id: OutfitId) => void
       requestModelSwitch: (id: OutfitId) => void
+      setDragMode: (enabled: boolean) => void
     }
   }
 }

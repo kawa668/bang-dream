@@ -1,7 +1,7 @@
 import { appendFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
-import { app, BrowserWindow, globalShortcut, ipcMain } from 'electron'
+import { app, BrowserWindow, globalShortcut, ipcMain, screen } from 'electron'
 
 const SHORTCUTS: Array<[string, string]> = [
   ['F1', 'casual'],
@@ -14,20 +14,25 @@ let outputWindow: BrowserWindow | null = null
 let controlWindow: BrowserWindow | null = null
 
 function createOutputWindow(): BrowserWindow {
+  const { workArea } = screen.getPrimaryDisplay()
   outputWindow = new BrowserWindow({
-    width: 1280,
-    height: 720,
+    x: workArea.x,
+    y: workArea.y,
+    width: workArea.width,
+    height: workArea.height,
     transparent: true,
     frame: false,
     backgroundColor: '#00000000',
     hasShadow: false,
-    resizable: true,
+    resizable: false,
+    alwaysOnTop: true,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,
       nodeIntegration: false
     }
   })
+  outputWindow.setIgnoreMouseEvents(true, { forward: true })
 
   const devUrl = process.env['ELECTRON_RENDERER_URL']
   if (devUrl) outputWindow.loadURL(devUrl)
@@ -77,6 +82,10 @@ app.whenReady().then(() => {
 
   ipcMain.on('model:switch-request', (_event, id: string) => {
     outputWindow?.webContents.send('model:switch', id)
+  })
+
+  ipcMain.on('drag-mode', (_event, enabled: boolean) => {
+    outputWindow?.setIgnoreMouseEvents(!enabled)
   })
 
   for (const [accelerator, id] of SHORTCUTS) {
