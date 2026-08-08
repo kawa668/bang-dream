@@ -35,19 +35,21 @@ async function showContextMenu(clientX: number, clientY: number, renderer: Live2
   menu.innerHTML = ''
 
   const modelTitle = document.createElement('h3')
-  modelTitle.textContent = '切换模型'
+  modelTitle.textContent = '人物'
   menu.appendChild(modelTitle)
 
   for (const characterGroup of groupModelsByCharacter(models)) {
-    const characterTitle = document.createElement('h3')
-    characterTitle.textContent = characterGroup.character
-    menu.appendChild(characterTitle)
+    const characterContent = document.createElement('div')
+    characterContent.className = 'menu-group'
+    const modelCount = characterGroup.categories.reduce((sum, group) => sum + group.models.length, 0)
+    menu.appendChild(createContextToggle(characterGroup.character, modelCount, characterContent))
+    menu.appendChild(characterContent)
 
     for (const category of characterGroup.categories) {
       const group = document.createElement('div')
       group.className = 'menu-group'
-      menu.appendChild(createContextToggle(category.title, category.models.length, group))
-      menu.appendChild(group)
+      characterContent.appendChild(createContextToggle(category.title, category.models.length, group))
+      characterContent.appendChild(group)
 
       for (const model of category.models) {
         const button = document.createElement('button')
@@ -65,7 +67,7 @@ async function showContextMenu(clientX: number, clientY: number, renderer: Live2
   const actionSection = document.createElement('div')
   actionSection.className = 'menu-section'
   const actionTitle = document.createElement('h3')
-  actionTitle.textContent = '切换动作'
+  actionTitle.textContent = '动作'
   actionSection.appendChild(actionTitle)
   for (const group of groupActions(actions)) {
     const groupElement = document.createElement('div')

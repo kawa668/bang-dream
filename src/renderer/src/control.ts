@@ -34,17 +34,23 @@ async function renderModelButtons(): Promise<void> {
   await ensureManifest()
   if (!modelButtons) return
   modelButtons.innerHTML = ''
+  const personTitle = document.createElement('h2')
+  personTitle.textContent = '人物'
+  modelButtons.appendChild(personTitle)
+
   for (const characterGroup of groupModelsByCharacter([...manifestByModel.values()])) {
-    const heading = document.createElement('h3')
-    heading.textContent = characterGroup.character
-    modelButtons.appendChild(heading)
+    const characterContent = document.createElement('div')
+    characterContent.className = 'character-models'
+    const modelCount = characterGroup.categories.reduce((sum, group) => sum + group.models.length, 0)
+    modelButtons.appendChild(createCollapseToggle(characterGroup.character, modelCount, characterContent))
+    modelButtons.appendChild(characterContent)
 
     for (const category of characterGroup.categories) {
       const buttonGroup = document.createElement('div')
       buttonGroup.className = 'category-buttons'
       const toggle = createCollapseToggle(category.title, category.models.length, buttonGroup)
-      modelButtons.appendChild(toggle)
-      modelButtons.appendChild(buttonGroup)
+      characterContent.appendChild(toggle)
+      characterContent.appendChild(buttonGroup)
 
       for (const model of category.models) {
         const button = document.createElement('button')
@@ -87,6 +93,10 @@ async function renderActions(id: OutfitId): Promise<void> {
   }
 
   actionGroups.innerHTML = ''
+  const actionTitle = document.createElement('h2')
+  actionTitle.textContent = '动作'
+  actionGroups.appendChild(actionTitle)
+
   for (const group of groupActions(actions)) {
     const list = document.createElement('div')
     list.className = 'action-buttons'
