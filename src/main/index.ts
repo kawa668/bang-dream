@@ -71,6 +71,10 @@ app.whenReady().then(() => {
     outputWindow?.webContents.send('action:play', action)
   })
 
+  ipcMain.on('model:changed', (_event, id: string) => {
+    controlWindow?.webContents.send('model:switch', id)
+  })
+
   for (const [accelerator, id] of SHORTCUTS) {
     const ok = globalShortcut.register(accelerator, () => {
       for (const win of BrowserWindow.getAllWindows()) {

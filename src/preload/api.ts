@@ -22,6 +22,9 @@ const api = {
     const listener = (_event: Electron.IpcRendererEvent, action: string): void => callback(action)
     ipcRenderer.on('action:play', listener)
     return () => ipcRenderer.removeListener('action:play', listener)
+  },
+  reportModel: (id: OutfitId): void => {
+    ipcRenderer.send('model:changed', id)
   }
 }
 

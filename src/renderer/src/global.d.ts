@@ -8,6 +8,7 @@ declare global {
       onStatus: (callback: (status: string) => void) => () => void
       playAction: (action: string) => void
       onActionPlay: (callback: (action: string) => void) => () => void
+      reportModel: (id: OutfitId) => void
     }
   }
 }

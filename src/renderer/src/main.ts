@@ -10,6 +10,7 @@ async function main(): Promise<void> {
   const modelManager = new ModelManager(renderer)
   await modelManager.init()
   window.api.reportStatus('随机动作模式')
+  window.api.reportModel(modelManager.getCurrent() ?? 'casual')
 
   let manualActionUntil = 0
   setInterval(() => {
@@ -19,15 +20,22 @@ async function main(): Promise<void> {
   }, 6000)
 
   const localShortcutIds: OutfitId[] = ['casual', 'event', 'school_summer', 'school_winter']
+  const switchModel = (id: OutfitId): void => {
+    modelManager.switchModel(id)
+      .then(() => {
+        window.api.reportModel(id)
+        window.api.reportStatus(`当前服装：${id}`)
+      })
+      .catch((error) => console.error(error))
+  }
+
   window.addEventListener('keydown', (event) => {
     const index = ['1', '2', '3', '4'].indexOf(event.key)
-    if (index >= 0) modelManager.switchModel(localShortcutIds[index]).catch((error) => console.error(error))
+    if (index >= 0) switchModel(localShortcutIds[index])
   })
 
   window.api.onModelSwitch((id) => {
-    modelManager.switchModel(id)
-      .then(() => window.api.reportStatus(`当前服装：${id}`))
-      .catch((error) => console.error(error))
+    switchModel(id)
   })
 
   window.api.onActionPlay((action) => {
