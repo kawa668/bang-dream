@@ -14,6 +14,14 @@ const api = {
     const listener = (_event: Electron.IpcRendererEvent, status: string): void => callback(status)
     ipcRenderer.on('app:status', listener)
     return () => ipcRenderer.removeListener('app:status', listener)
+  },
+  playAction: (action: string): void => {
+    ipcRenderer.send('action:play', action)
+  },
+  onActionPlay: (callback: (action: string) => void): (() => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, action: string): void => callback(action)
+    ipcRenderer.on('action:play', listener)
+    return () => ipcRenderer.removeListener('action:play', listener)
   }
 }
 

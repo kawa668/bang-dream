@@ -11,7 +11,9 @@ async function main(): Promise<void> {
   await modelManager.init()
   window.api.reportStatus('随机动作模式')
 
+  let manualActionUntil = 0
   setInterval(() => {
+    if (Date.now() < manualActionUntil) return
     const action = renderer.playRandomMotion()
     if (action) window.api.reportStatus(`动作：${action}`)
   }, 6000)
@@ -26,6 +28,12 @@ async function main(): Promise<void> {
     modelManager.switchModel(id)
       .then(() => window.api.reportStatus(`当前服装：${id}`))
       .catch((error) => console.error(error))
+  })
+
+  window.api.onActionPlay((action) => {
+    manualActionUntil = Date.now() + 8000
+    const played = renderer.playMotion(action)
+    window.api.reportStatus(played ? `动作：${action}` : `当前模型没有动作：${action}`)
   })
 }
 
