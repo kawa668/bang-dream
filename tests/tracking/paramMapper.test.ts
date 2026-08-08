@@ -21,4 +21,18 @@ describe('mapTrackingToParams', () => {
     expect(params['PARAM_EYE_R_OPEN']).toBe(1)
     expect(params['PARAM_MOUTH_OPEN_Y']).toBe(20)
   })
+
+  it('maps torso landmarks to body angle params', () => {
+    const body = Array.from({ length: 33 }, () => ({ x: 0.5, y: 0.5, z: 0 }))
+    body[11] = { x: 0.4, y: 0.35, z: 0 }
+    body[12] = { x: 0.6, y: 0.45, z: 0 }
+    body[23] = { x: 0.45, y: 0.7, z: 0 }
+    body[24] = { x: 0.55, y: 0.7, z: 0 }
+
+    const params = mapTrackingToParams({ body })
+
+    expect(params['PARAM_BODY_ANGLE_Y']).toBe(0)
+    expect(params['PARAM_BODY_ANGLE_Z']).toBeGreaterThan(0)
+    expect(params['PARAM_UPPER_BODY']).toBeCloseTo(-0.2, 5)
+  })
 })

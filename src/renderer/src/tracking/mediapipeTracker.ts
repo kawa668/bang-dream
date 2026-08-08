@@ -2,6 +2,7 @@ import {
   FaceLandmarker,
   FilesetResolver,
   HandLandmarker,
+  PoseLandmarker,
   type NormalizedLandmark
 } from '@mediapipe/tasks-vision'
 import type { LandmarkPoint, TrackingFrame, TrackingOptions } from '../../../shared/tracking'
@@ -19,6 +20,7 @@ function blendshapeMap(categories?: Array<{ categoryName: string; score: number 
 export class MediaPipeTracker {
   private faceLandmarker: FaceLandmarker | null = null
   private handLandmarker: HandLandmarker | null = null
+  private poseLandmarker: PoseLandmarker | null = null
   private rafId = 0
   private running = false
 
@@ -51,6 +53,17 @@ export class MediaPipeTracker {
       })
     }
 
+    if (options.enableBody) {
+      this.poseLandmarker = await PoseLandmarker.createFromOptions(vision, {
+        baseOptions: {
+          modelAssetPath: './vendor/pose_landmarker_full.task',
+          delegate: 'GPU'
+        },
+        runningMode: 'VIDEO',
+        numPoses: 1
+      })
+    }
+
     this.running = true
     const tick = (): void => {
       if (!this.running) return
@@ -70,6 +83,11 @@ export class MediaPipeTracker {
         frame.hands = handResult.landmarks.map((hand) => hand.map(toPoint))
       }
 
+      const poseResult = this.poseLandmarker?.detectForVideo(video, timestamp)
+      if (poseResult?.landmarks.length) {
+        frame.body = poseResult.landmarks[0].map(toPoint)
+      }
+
       onFrame(frame)
       this.rafId = requestAnimationFrame(tick)
     }
@@ -82,7 +100,9 @@ export class MediaPipeTracker {
     cancelAnimationFrame(this.rafId)
     this.faceLandmarker?.close()
     this.handLandmarker?.close()
+    this.poseLandmarker?.close()
     this.faceLandmarker = null
     this.handLandmarker = null
+    this.poseLandmarker = null
   }
 }

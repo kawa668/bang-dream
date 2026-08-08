@@ -9,15 +9,15 @@ import { QualityController, type QualityLevel } from './tracking/quality'
 
 function optionsForLevel(level: QualityLevel) {
   if (level === 'minimal') {
-    return { enableFace: false, enableHands: false, inputWidth: 320, inputHeight: 180 }
+    return { enableFace: false, enableHands: false, enableBody: false, inputWidth: 320, inputHeight: 180 }
   }
   if (level === 'face-only') {
-    return { enableFace: true, enableHands: false, inputWidth: 480, inputHeight: 270 }
+    return { enableFace: true, enableHands: false, enableBody: false, inputWidth: 480, inputHeight: 270 }
   }
   if (level === 'lite') {
-    return { enableFace: true, enableHands: true, inputWidth: 480, inputHeight: 270 }
+    return { enableFace: true, enableHands: true, enableBody: true, inputWidth: 480, inputHeight: 270 }
   }
-  return { enableFace: true, enableHands: true, inputWidth: 1280, inputHeight: 720 }
+  return { enableFace: true, enableHands: true, enableBody: true, inputWidth: 1280, inputHeight: 720 }
 }
 
 async function main(): Promise<void> {

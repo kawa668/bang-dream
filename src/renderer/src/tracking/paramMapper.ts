@@ -34,6 +34,27 @@ export function mapTrackingToParams(frame: TrackingFrame): Record<string, number
     params['PARAM_POSITION_Y'] = clamp(((nose.y - 0.5) / Math.max(faceHeight, 0.01)) * 0.5, -0.5, 0.5)
   }
 
+  if (frame.body && frame.body.length >= 25) {
+    const leftShoulder = frame.body[11]
+    const rightShoulder = frame.body[12]
+    const leftHip = frame.body[23]
+    const rightHip = frame.body[24]
+    const shoulderMid = {
+      x: (leftShoulder.x + rightShoulder.x) / 2,
+      y: (leftShoulder.y + rightShoulder.y) / 2
+    }
+    const hipMid = {
+      x: (leftHip.x + rightHip.x) / 2,
+      y: (leftHip.y + rightHip.y) / 2
+    }
+    const roll = Math.atan2(rightShoulder.y - leftShoulder.y, rightShoulder.x - leftShoulder.x) * 180 / Math.PI
+
+    params['PARAM_BODY_ANGLE_X'] = clamp((shoulderMid.y - hipMid.y) * 120, -30, 30)
+    params['PARAM_BODY_ANGLE_Y'] = clamp((shoulderMid.x - 0.5) * 80, -30, 30)
+    params['PARAM_BODY_ANGLE_Z'] = clamp(roll * 1.5, -15, 15)
+    params['PARAM_UPPER_BODY'] = clamp((shoulderMid.y - 0.5) * 2, -1, 1)
+  }
+
   if (frame.hands && frame.hands.length > 0) {
     frame.hands.forEach((hand, index) => {
       const side = index === 0 ? 'L' : 'R'
