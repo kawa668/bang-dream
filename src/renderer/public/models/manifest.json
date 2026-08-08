@@ -1,22 +1,107 @@
 [
   {
     "id": "casual",
-    "displayName": "便装",
+    "displayName": "若叶睦·casual 2023",
     "modelJsonUrl": "models/casual/model.json"
   },
   {
     "id": "event",
-    "displayName": "活动剧情装",
+    "displayName": "若叶睦·event 297 story 01",
     "modelJsonUrl": "models/event/model.json"
   },
   {
     "id": "school_summer",
-    "displayName": "夏季校服",
+    "displayName": "若叶睦·school summer 2023",
     "modelJsonUrl": "models/school_summer/model.json"
   },
   {
     "id": "school_winter",
-    "displayName": "冬季校服",
+    "displayName": "若叶睦·school winter 2023",
     "modelJsonUrl": "models/school_winter/model.json"
+  },
+  {
+    "id": "037_birthday_2024_ssr",
+    "displayName": "千早爱音·birthday 2024 ssr",
+    "modelJsonUrl": "models/037_birthday_2024_ssr/model.json"
+  },
+  {
+    "id": "037_casual-2023",
+    "displayName": "千早爱音·casual 2023",
+    "modelJsonUrl": "models/037_casual-2023/model.json"
+  },
+  {
+    "id": "037_collabo_a_ur",
+    "displayName": "千早爱音·collabo a ur",
+    "modelJsonUrl": "models/037_collabo_a_ur/model.json"
+  },
+  {
+    "id": "037_dream_festival_3_ur",
+    "displayName": "千早爱音·dream festival 3 ur",
+    "modelJsonUrl": "models/037_dream_festival_3_ur/model.json"
+  },
+  {
+    "id": "037_live_default",
+    "displayName": "千早爱音·live default",
+    "modelJsonUrl": "models/037_live_default/model.json"
+  },
+  {
+    "id": "037_live_event_235_ur",
+    "displayName": "千早爱音·live event 235 ur",
+    "modelJsonUrl": "models/037_live_event_235_ur/model.json"
+  },
+  {
+    "id": "037_live_event_240_sr",
+    "displayName": "千早爱音·live event 240 sr",
+    "modelJsonUrl": "models/037_live_event_240_sr/model.json"
+  },
+  {
+    "id": "037_live_event_250_r",
+    "displayName": "千早爱音·live event 250 r",
+    "modelJsonUrl": "models/037_live_event_250_r/model.json"
+  },
+  {
+    "id": "037_live_event_253_ur",
+    "displayName": "千早爱音·live event 253 ur",
+    "modelJsonUrl": "models/037_live_event_253_ur/model.json"
+  },
+  {
+    "id": "037_live_event_277_sr",
+    "displayName": "千早爱音·live event 277 sr",
+    "modelJsonUrl": "models/037_live_event_277_sr/model.json"
+  },
+  {
+    "id": "037_live_event_286_sr",
+    "displayName": "千早爱音·live event 286 sr",
+    "modelJsonUrl": "models/037_live_event_286_sr/model.json"
+  },
+  {
+    "id": "037_live_event_297_sr",
+    "displayName": "千早爱音·live event 297 sr",
+    "modelJsonUrl": "models/037_live_event_297_sr/model.json"
+  },
+  {
+    "id": "037_live_event_307_ur",
+    "displayName": "千早爱音·live event 307 ur",
+    "modelJsonUrl": "models/037_live_event_307_ur/model.json"
+  },
+  {
+    "id": "037_live_event_313_ur",
+    "displayName": "千早爱音·live event 313 ur",
+    "modelJsonUrl": "models/037_live_event_313_ur/model.json"
+  },
+  {
+    "id": "037_live_sr_01",
+    "displayName": "千早爱音·live sr 01",
+    "modelJsonUrl": "models/037_live_sr_01/model.json"
+  },
+  {
+    "id": "037_school_summer-2023",
+    "displayName": "千早爱音·school summer 2023",
+    "modelJsonUrl": "models/037_school_summer-2023/model.json"
+  },
+  {
+    "id": "037_school_winter-2023",
+    "displayName": "千早爱音·school winter 2023",
+    "modelJsonUrl": "models/037_school_winter-2023/model.json"
   }
 ]

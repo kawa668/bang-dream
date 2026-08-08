@@ -3,16 +3,46 @@ import { join } from 'node:path'
 import { createCubism2ModelJson } from '../src/model/buildModelConfig'
 import type { BuildDataAsset, Cubism2ModelJson, ModelDescriptor, OutfitId } from '../src/shared/types'
 
-const SOURCE_ROOT = process.env['LIVE2D_SOURCE_ROOT'] ?? 'D:\\codex\\模型下载\\live2d\\338'
+const SOURCE_ROOT = process.env['LIVE2D_SOURCE_ROOT'] ?? 'D:\\codex\\模型下载\\live2d'
 const DEST_ROOT = process.env['LIVE2D_DEST_ROOT'] ?? 'src/renderer/public/models'
-const GENERAL_DIR = join(SOURCE_ROOT, '338_general')
 
-const OUTFITS: Array<{ id: OutfitId; displayName: string; dir: string }> = [
-  { id: 'casual', displayName: '便装', dir: '338_casual-2023' },
-  { id: 'event', displayName: '活动剧情装', dir: '338_event_297_story_01' },
-  { id: 'school_summer', displayName: '夏季校服', dir: '338_school_summer-2023' },
-  { id: 'school_winter', displayName: '冬季校服', dir: '338_school_winter-2023' }
+const CHARACTERS = [
+  { prefix: '338', displayName: '若叶睦', legacyIds: true },
+  { prefix: '037', displayName: '千早爱音', legacyIds: false }
 ]
+
+function legacy338Id(dir: string): OutfitId | null {
+  const map: Record<string, OutfitId> = {
+    '338_casual-2023': 'casual',
+    '338_event_297_story_01': 'event',
+    '338_school_summer-2023': 'school_summer',
+    '338_school_winter-2023': 'school_winter'
+  }
+  return map[dir] ?? null
+}
+
+function prettyName(dir: string): string {
+  return dir.replace(/^(338|037)_/, '').replace(/[-_]/g, ' ')
+}
+
+async function collectOutfits(): Promise<Array<{ id: OutfitId; displayName: string; sourceDir: string; generalDir: string }>> {
+  const outfits = []
+  for (const character of CHARACTERS) {
+    const characterRoot = join(SOURCE_ROOT, character.prefix)
+    const entries = await readdir(characterRoot, { withFileTypes: true })
+    for (const entry of entries) {
+      if (!entry.isDirectory() || entry.name === `${character.prefix}_general`) continue
+      const id = character.legacyIds ? (legacy338Id(entry.name) ?? entry.name) : entry.name
+      outfits.push({
+        id,
+        displayName: `${character.displayName}·${prettyName(entry.name)}`,
+        sourceDir: join(characterRoot, entry.name),
+        generalDir: join(characterRoot, `${character.prefix}_general`)
+      })
+    }
+  }
+  return outfits
+}
 
 async function copyAsset(sourceDirs: string[], destDir: string, name: string): Promise<void> {
   for (const sourceDir of sourceDirs) {
@@ -40,15 +70,16 @@ async function main(): Promise<void> {
   await mkdir(DEST_ROOT, { recursive: true })
   const descriptors: ModelDescriptor[] = []
 
-  for (const outfit of OUTFITS) {
-    const sourceDir = join(SOURCE_ROOT, outfit.dir)
+  for (const outfit of await collectOutfits()) {
+    const sourceDir = outfit.sourceDir
     const destDir = join(DEST_ROOT, outfit.id)
-    const sourceDirs = [sourceDir, GENERAL_DIR]
+    const generalDir = outfit.generalDir
+    const sourceDirs = [sourceDir, generalDir]
     await mkdir(destDir, { recursive: true })
 
     const buildDataRaw = await readFile(join(sourceDir, 'buildData.asset'), 'utf8')
     const buildData = JSON.parse(buildDataRaw) as BuildDataAsset
-    const generalFiles = await readdir(GENERAL_DIR).catch(() => [] as string[])
+    const generalFiles = await readdir(generalDir).catch(() => [] as string[])
     const existingFiles = new Set([...(await readdir(sourceDir)), ...generalFiles])
     const json = createCubism2ModelJson(buildData, existingFiles)
 

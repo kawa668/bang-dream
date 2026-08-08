@@ -1,4 +1,4 @@
-export type OutfitId = 'casual' | 'event' | 'school_summer' | 'school_winter'
+export type OutfitId = string
 
 export interface ModelDescriptor {
   id: OutfitId

@@ -1,0 +1,423 @@
+{
+  "model": "anon_school_summer-2023.moc",
+  "textures": [
+    "texture_00.png",
+    "texture_01.png"
+  ],
+  "physics": "anon_school_summer-2023.physics.json",
+  "motions": {
+    "idle": [
+      {
+        "file": "idle01.mtn"
+      }
+    ],
+    "tap_body": [
+      {
+        "file": "angry01.mtn"
+      },
+      {
+        "file": "angry02.mtn"
+      },
+      {
+        "file": "angry03.mtn"
+      },
+      {
+        "file": "angry04.mtn"
+      },
+      {
+        "file": "bye01.mtn"
+      },
+      {
+        "file": "cry01.mtn"
+      },
+      {
+        "file": "cry02.mtn"
+      },
+      {
+        "file": "kandou01.mtn"
+      },
+      {
+        "file": "kandou02.mtn"
+      },
+      {
+        "file": "kime01.mtn"
+      },
+      {
+        "file": "kime02.mtn"
+      },
+      {
+        "file": "nf01.mtn"
+      },
+      {
+        "file": "nf02.mtn"
+      },
+      {
+        "file": "nf03.mtn"
+      },
+      {
+        "file": "nf04.mtn"
+      },
+      {
+        "file": "nf05.mtn"
+      },
+      {
+        "file": "nf_left01.mtn"
+      },
+      {
+        "file": "nf_right01.mtn"
+      },
+      {
+        "file": "nnf01.mtn"
+      },
+      {
+        "file": "nnf02.mtn"
+      },
+      {
+        "file": "nnf03.mtn"
+      },
+      {
+        "file": "nnf04.mtn"
+      },
+      {
+        "file": "nnf05.mtn"
+      },
+      {
+        "file": "nnf_left01.mtn"
+      },
+      {
+        "file": "nnf_right01.mtn"
+      },
+      {
+        "file": "sad01.mtn"
+      },
+      {
+        "file": "sad02.mtn"
+      },
+      {
+        "file": "serious01.mtn"
+      },
+      {
+        "file": "serious02.mtn"
+      },
+      {
+        "file": "shame01.mtn"
+      },
+      {
+        "file": "shame02.mtn"
+      },
+      {
+        "file": "smile01.mtn"
+      },
+      {
+        "file": "smile02.mtn"
+      },
+      {
+        "file": "smile03.mtn"
+      },
+      {
+        "file": "smile04.mtn"
+      },
+      {
+        "file": "surprised01.mtn"
+      },
+      {
+        "file": "thinking01.mtn"
+      },
+      {
+        "file": "thinking02.mtn"
+      },
+      {
+        "file": "thinking03.mtn"
+      },
+      {
+        "file": "wink01.mtn"
+      }
+    ],
+    "angry01": [
+      {
+        "file": "angry01.mtn"
+      }
+    ],
+    "angry02": [
+      {
+        "file": "angry02.mtn"
+      }
+    ],
+    "angry03": [
+      {
+        "file": "angry03.mtn"
+      }
+    ],
+    "angry04": [
+      {
+        "file": "angry04.mtn"
+      }
+    ],
+    "bye01": [
+      {
+        "file": "bye01.mtn"
+      }
+    ],
+    "cry01": [
+      {
+        "file": "cry01.mtn"
+      }
+    ],
+    "cry02": [
+      {
+        "file": "cry02.mtn"
+      }
+    ],
+    "kandou01": [
+      {
+        "file": "kandou01.mtn"
+      }
+    ],
+    "kandou02": [
+      {
+        "file": "kandou02.mtn"
+      }
+    ],
+    "kime01": [
+      {
+        "file": "kime01.mtn"
+      }
+    ],
+    "kime02": [
+      {
+        "file": "kime02.mtn"
+      }
+    ],
+    "nf01": [
+      {
+        "file": "nf01.mtn"
+      }
+    ],
+    "nf02": [
+      {
+        "file": "nf02.mtn"
+      }
+    ],
+    "nf03": [
+      {
+        "file": "nf03.mtn"
+      }
+    ],
+    "nf04": [
+      {
+        "file": "nf04.mtn"
+      }
+    ],
+    "nf05": [
+      {
+        "file": "nf05.mtn"
+      }
+    ],
+    "nf_left01": [
+      {
+        "file": "nf_left01.mtn"
+      }
+    ],
+    "nf_right01": [
+      {
+        "file": "nf_right01.mtn"
+      }
+    ],
+    "nnf01": [
+      {
+        "file": "nnf01.mtn"
+      }
+    ],
+    "nnf02": [
+      {
+        "file": "nnf02.mtn"
+      }
+    ],
+    "nnf03": [
+      {
+        "file": "nnf03.mtn"
+      }
+    ],
+    "nnf04": [
+      {
+        "file": "nnf04.mtn"
+      }
+    ],
+    "nnf05": [
+      {
+        "file": "nnf05.mtn"
+      }
+    ],
+    "nnf_left01": [
+      {
+        "file": "nnf_left01.mtn"
+      }
+    ],
+    "nnf_right01": [
+      {
+        "file": "nnf_right01.mtn"
+      }
+    ],
+    "sad01": [
+      {
+        "file": "sad01.mtn"
+      }
+    ],
+    "sad02": [
+      {
+        "file": "sad02.mtn"
+      }
+    ],
+    "serious01": [
+      {
+        "file": "serious01.mtn"
+      }
+    ],
+    "serious02": [
+      {
+        "file": "serious02.mtn"
+      }
+    ],
+    "shame01": [
+      {
+        "file": "shame01.mtn"
+      }
+    ],
+    "shame02": [
+      {
+        "file": "shame02.mtn"
+      }
+    ],
+    "smile01": [
+      {
+        "file": "smile01.mtn"
+      }
+    ],
+    "smile02": [
+      {
+        "file": "smile02.mtn"
+      }
+    ],
+    "smile03": [
+      {
+        "file": "smile03.mtn"
+      }
+    ],
+    "smile04": [
+      {
+        "file": "smile04.mtn"
+      }
+    ],
+    "surprised01": [
+      {
+        "file": "surprised01.mtn"
+      }
+    ],
+    "thinking01": [
+      {
+        "file": "thinking01.mtn"
+      }
+    ],
+    "thinking02": [
+      {
+        "file": "thinking02.mtn"
+      }
+    ],
+    "thinking03": [
+      {
+        "file": "thinking03.mtn"
+      }
+    ],
+    "wink01": [
+      {
+        "file": "wink01.mtn"
+      }
+    ]
+  },
+  "expressions": [
+    {
+      "file": "angry01.exp.json"
+    },
+    {
+      "file": "angry02.exp.json"
+    },
+    {
+      "file": "angry03.exp.json"
+    },
+    {
+      "file": "angry04.exp.json"
+    },
+    {
+      "file": "bye01.exp.json"
+    },
+    {
+      "file": "cry01.exp.json"
+    },
+    {
+      "file": "cry02.exp.json"
+    },
+    {
+      "file": "default.exp.json"
+    },
+    {
+      "file": "idle01.exp.json"
+    },
+    {
+      "file": "kandou01.exp.json"
+    },
+    {
+      "file": "kandou02.exp.json"
+    },
+    {
+      "file": "kime01.exp.json"
+    },
+    {
+      "file": "kime02.exp.json"
+    },
+    {
+      "file": "sad01.exp.json"
+    },
+    {
+      "file": "sad02.exp.json"
+    },
+    {
+      "file": "serious01.exp.json"
+    },
+    {
+      "file": "serious02.exp.json"
+    },
+    {
+      "file": "shame01.exp.json"
+    },
+    {
+      "file": "shame02.exp.json"
+    },
+    {
+      "file": "smile01.exp.json"
+    },
+    {
+      "file": "smile02.exp.json"
+    },
+    {
+      "file": "smile03.exp.json"
+    },
+    {
+      "file": "smile04.exp.json"
+    },
+    {
+      "file": "surprised01.exp.json"
+    },
+    {
+      "file": "thinking01.exp.json"
+    },
+    {
+      "file": "thinking02.exp.json"
+    },
+    {
+      "file": "thinking03.exp.json"
+    },
+    {
+      "file": "wink01.exp.json"
+    }
+  ]
+}
