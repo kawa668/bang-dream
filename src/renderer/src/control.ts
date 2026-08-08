@@ -1,15 +1,27 @@
-import type { ModelDescriptor, OutfitId } from '../../shared/types'
+import { groupActions } from '../../shared/actionCategories'
 import { groupModelsByCharacter } from '../../shared/modelCategories'
+import type { ModelDescriptor, OutfitId } from '../../shared/types'
 
 const status = document.querySelector<HTMLParagraphElement>('#status')
-const actionSelect = document.querySelector<HTMLSelectElement>('#action-select')
-const playActionButton = document.querySelector<HTMLButtonElement>('#play-action')
 const modelButtons = document.querySelector<HTMLDivElement>('#model-buttons')
+const actionGroups = document.querySelector<HTMLDivElement>('#action-groups')
 
 const manifestByModel = new Map<OutfitId, ModelDescriptor>()
 const actionsByModel = new Map<OutfitId, string[]>()
 let renderSequence = 0
 let currentModel: OutfitId = 'casual'
+
+function createCollapseToggle(title: string, count: number, content: HTMLElement): HTMLButtonElement {
+  const toggle = document.createElement('button')
+  toggle.className = 'collapse-toggle'
+  const update = (open: boolean): void => {
+    content.hidden = !open
+    toggle.textContent = `${open ? '▾' : '▸'} ${title} (${count})`
+  }
+  update(false)
+  toggle.addEventListener('click', () => update(content.hidden))
+  return toggle
+}
 
 async function ensureManifest(): Promise<void> {
   if (manifestByModel.size > 0) return
@@ -28,16 +40,11 @@ async function renderModelButtons(): Promise<void> {
     modelButtons.appendChild(heading)
 
     for (const category of characterGroup.categories) {
-      const categoryElement = document.createElement('div')
-      categoryElement.className = 'model-category'
-      const title = document.createElement('span')
-      title.className = 'category-title'
-      title.textContent = category.title
       const buttonGroup = document.createElement('div')
       buttonGroup.className = 'category-buttons'
-      categoryElement.appendChild(title)
-      categoryElement.appendChild(buttonGroup)
-      modelButtons.appendChild(categoryElement)
+      const toggle = createCollapseToggle(category.title, category.models.length, buttonGroup)
+      modelButtons.appendChild(toggle)
+      modelButtons.appendChild(buttonGroup)
 
       for (const model of category.models) {
         const button = document.createElement('button')
@@ -73,34 +80,32 @@ async function renderActions(id: OutfitId): Promise<void> {
   const sequence = ++renderSequence
   currentModel = id
   const actions = await loadActions(id)
-  if (sequence !== renderSequence || !actionSelect) return
+  if (sequence !== renderSequence || !actionGroups) return
 
   for (const button of modelButtons?.querySelectorAll<HTMLButtonElement>('button') ?? []) {
     button.classList.toggle('active', button.dataset.modelId === id)
   }
 
-  actionSelect.innerHTML = ''
-  const placeholder = document.createElement('option')
-  placeholder.value = ''
-  placeholder.textContent = '选择动作'
-  actionSelect.appendChild(placeholder)
+  actionGroups.innerHTML = ''
+  for (const group of groupActions(actions)) {
+    const list = document.createElement('div')
+    list.className = 'action-buttons'
+    const toggle = createCollapseToggle(group.title, group.actions.length, list)
+    actionGroups.appendChild(toggle)
+    actionGroups.appendChild(list)
 
-  for (const action of actions) {
-    const option = document.createElement('option')
-    option.value = action
-    option.textContent = action
-    actionSelect.appendChild(option)
+    for (const action of group.actions) {
+      const button = document.createElement('button')
+      button.textContent = action
+      button.addEventListener('click', () => window.api.playAction(action))
+      list.appendChild(button)
+    }
   }
 
   if (status) {
     status.textContent = `当前服装：${id}，可用动作 ${actions.length} 个`
   }
 }
-
-playActionButton?.addEventListener('click', () => {
-  const action = actionSelect?.value
-  if (action) window.api.playAction(action)
-})
 
 window.api.onModelSwitch((id) => {
   void renderActions(id)

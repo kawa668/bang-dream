@@ -1,3 +1,4 @@
+import { groupActions } from '../../shared/actionCategories'
 import { groupModelsByCharacter } from '../../shared/modelCategories'
 import type { OutfitId } from '../../shared/types'
 import { Live2DRenderer } from './live2d'
@@ -6,6 +7,18 @@ import { fetchModelManifest } from './models'
 
 function simplifiedName(displayName: string): string {
   return displayName.replace(/^(若叶睦|千早爱音)·/, '')
+}
+
+function createContextToggle(title: string, count: number, content: HTMLElement): HTMLButtonElement {
+  const toggle = document.createElement('button')
+  toggle.className = 'collapse-toggle'
+  const update = (open: boolean): void => {
+    content.hidden = !open
+    toggle.textContent = `${open ? '▾' : '▸'} ${title} (${count})`
+  }
+  update(false)
+  toggle.addEventListener('click', () => update(content.hidden))
+  return toggle
 }
 
 function closeContextMenu(menu: HTMLDivElement): void {
@@ -31,11 +44,10 @@ async function showContextMenu(clientX: number, clientY: number, renderer: Live2
     menu.appendChild(characterTitle)
 
     for (const category of characterGroup.categories) {
-      const categoryTitle = document.createElement('div')
-      categoryTitle.textContent = category.title
-      categoryTitle.style.fontSize = '12px'
-      categoryTitle.style.color = '#666'
-      menu.appendChild(categoryTitle)
+      const group = document.createElement('div')
+      group.className = 'menu-group'
+      menu.appendChild(createContextToggle(category.title, category.models.length, group))
+      menu.appendChild(group)
 
       for (const model of category.models) {
         const button = document.createElement('button')
@@ -45,7 +57,7 @@ async function showContextMenu(clientX: number, clientY: number, renderer: Live2
           window.api.requestModelSwitch(model.id)
           closeContextMenu(menu)
         })
-        menu.appendChild(button)
+        group.appendChild(button)
       }
     }
   }
@@ -55,16 +67,22 @@ async function showContextMenu(clientX: number, clientY: number, renderer: Live2
   const actionTitle = document.createElement('h3')
   actionTitle.textContent = '切换动作'
   actionSection.appendChild(actionTitle)
-  for (const action of actions) {
-    const button = document.createElement('button')
-    button.className = 'menu-item'
-    button.textContent = action
-    button.addEventListener('click', () => {
-      renderer.playMotion(action)
-      window.api.reportStatus(`动作：${action}`)
-      closeContextMenu(menu)
-    })
-    actionSection.appendChild(button)
+  for (const group of groupActions(actions)) {
+    const groupElement = document.createElement('div')
+    groupElement.className = 'menu-group'
+    actionSection.appendChild(createContextToggle(group.title, group.actions.length, groupElement))
+    actionSection.appendChild(groupElement)
+    for (const action of group.actions) {
+      const button = document.createElement('button')
+      button.className = 'menu-item'
+      button.textContent = action
+      button.addEventListener('click', () => {
+        renderer.playMotion(action)
+        window.api.reportStatus(`动作：${action}`)
+        closeContextMenu(menu)
+      })
+      groupElement.appendChild(button)
+    }
   }
   menu.appendChild(actionSection)
 
