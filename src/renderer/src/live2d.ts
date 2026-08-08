@@ -59,6 +59,18 @@ export class Live2DRenderer {
     return true
   }
 
+  playRandomMotion(): string | null {
+    const manager = this.model?.internalModel.motionManager as {
+      groups?: Record<string, unknown>
+    } | null
+    if (!manager?.groups) return null
+    const groups = Object.keys(manager.groups).filter((group) => group !== 'idle' && group !== 'tap_body')
+    if (groups.length === 0) return null
+    const group = groups[Math.floor(Math.random() * groups.length)]
+    this.model?.motion(group)
+    return group
+  }
+
   private toCanvasPoint(event: PointerEvent): { x: number; y: number } {
     const rect = this.canvas.getBoundingClientRect()
     return { x: event.clientX - rect.left, y: event.clientY - rect.top }
