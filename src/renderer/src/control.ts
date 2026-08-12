@@ -55,7 +55,7 @@ async function renderModelButtons(): Promise<void> {
       for (const model of category.models) {
         const button = document.createElement('button')
         button.dataset.modelId = model.id
-        button.textContent = model.displayName.replace(/^(若叶睦|千早爱音)·/, '')
+        button.textContent = model.displayName.replace(/^(若叶睦|千早爱音|丰川祥子)·/, '')
         button.addEventListener('click', () => window.api.requestModelSwitch(model.id))
         buttonGroup.appendChild(button)
       }

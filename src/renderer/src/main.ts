@@ -10,7 +10,7 @@ let contextMenuOpen = false
 let modelManifestCache: ModelDescriptor[] | null = null
 
 function simplifiedName(displayName: string): string {
-  return displayName.replace(/^(若叶睦|千早爱音)·/, '')
+  return displayName.replace(/^(若叶睦|千早爱音|丰川祥子)·/, '')
 }
 
 async function getModelManifest(): Promise<ModelDescriptor[]> {

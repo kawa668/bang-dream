@@ -1,0 +1,949 @@
+{
+  "model": "sakiko_other-25.moc",
+  "textures": [
+    "texture_00.png",
+    "texture_01.png"
+  ],
+  "physics": "sakiko_other-25.physics.json",
+  "motions": {
+    "idle": [
+      {
+        "file": "idle01.mtn"
+      },
+      {
+        "file": "maskon_idle01.mtn"
+      }
+    ],
+    "tap_body": [
+      {
+        "file": "angry01.mtn"
+      },
+      {
+        "file": "angry02.mtn"
+      },
+      {
+        "file": "angry03.mtn"
+      },
+      {
+        "file": "angry04.mtn"
+      },
+      {
+        "file": "angry05.mtn"
+      },
+      {
+        "file": "angry06.mtn"
+      },
+      {
+        "file": "angry07.mtn"
+      },
+      {
+        "file": "bow.mtn"
+      },
+      {
+        "file": "bye01.mtn"
+      },
+      {
+        "file": "bye02.mtn"
+      },
+      {
+        "file": "cry01.mtn"
+      },
+      {
+        "file": "cry02.mtn"
+      },
+      {
+        "file": "cry03.mtn"
+      },
+      {
+        "file": "cry04.mtn"
+      },
+      {
+        "file": "cry05.mtn"
+      },
+      {
+        "file": "cry06.mtn"
+      },
+      {
+        "file": "kime01.mtn"
+      },
+      {
+        "file": "maskoff.mtn"
+      },
+      {
+        "file": "maskon_angry01.mtn"
+      },
+      {
+        "file": "maskon_angry02.mtn"
+      },
+      {
+        "file": "maskon_angry03.mtn"
+      },
+      {
+        "file": "maskon_angry04.mtn"
+      },
+      {
+        "file": "maskon_angry05.mtn"
+      },
+      {
+        "file": "maskon_angry06.mtn"
+      },
+      {
+        "file": "maskon_angry07.mtn"
+      },
+      {
+        "file": "maskon_bow.mtn"
+      },
+      {
+        "file": "maskon_bye01.mtn"
+      },
+      {
+        "file": "maskon_bye02.mtn"
+      },
+      {
+        "file": "maskon_cry01.mtn"
+      },
+      {
+        "file": "maskon_cry02.mtn"
+      },
+      {
+        "file": "maskon_cry03.mtn"
+      },
+      {
+        "file": "maskon_cry04.mtn"
+      },
+      {
+        "file": "maskon_cry05.mtn"
+      },
+      {
+        "file": "maskon_cry06.mtn"
+      },
+      {
+        "file": "maskon_kime01.mtn"
+      },
+      {
+        "file": "maskon_nf01.mtn"
+      },
+      {
+        "file": "maskon_nf02.mtn"
+      },
+      {
+        "file": "maskon_nf03.mtn"
+      },
+      {
+        "file": "maskon_nf04.mtn"
+      },
+      {
+        "file": "maskon_nf05.mtn"
+      },
+      {
+        "file": "maskon_nf_left01.mtn"
+      },
+      {
+        "file": "maskon_nf_right01.mtn"
+      },
+      {
+        "file": "maskon_nnf01.mtn"
+      },
+      {
+        "file": "maskon_nnf02.mtn"
+      },
+      {
+        "file": "maskon_nnf03.mtn"
+      },
+      {
+        "file": "maskon_nnf04.mtn"
+      },
+      {
+        "file": "maskon_nnf05.mtn"
+      },
+      {
+        "file": "maskon_nnf_left01.mtn"
+      },
+      {
+        "file": "maskon_nnf_right01.mtn"
+      },
+      {
+        "file": "maskon_nod01.mtn"
+      },
+      {
+        "file": "maskon_odoodo01.mtn"
+      },
+      {
+        "file": "maskon_sad01.mtn"
+      },
+      {
+        "file": "maskon_sad02.mtn"
+      },
+      {
+        "file": "maskon_serious01.mtn"
+      },
+      {
+        "file": "maskon_serious02.mtn"
+      },
+      {
+        "file": "maskon_shame01.mtn"
+      },
+      {
+        "file": "maskon_shame02.mtn"
+      },
+      {
+        "file": "maskon_sigh01.mtn"
+      },
+      {
+        "file": "maskon_sigh02.mtn"
+      },
+      {
+        "file": "maskon_smile01.mtn"
+      },
+      {
+        "file": "maskon_smile02.mtn"
+      },
+      {
+        "file": "maskon_smile03.mtn"
+      },
+      {
+        "file": "maskon_smile04.mtn"
+      },
+      {
+        "file": "maskon_smile05.mtn"
+      },
+      {
+        "file": "maskon_smile06.mtn"
+      },
+      {
+        "file": "maskon_smile07.mtn"
+      },
+      {
+        "file": "maskon_surprised01.mtn"
+      },
+      {
+        "file": "maskon_surprised02.mtn"
+      },
+      {
+        "file": "maskon_thinking01.mtn"
+      },
+      {
+        "file": "maskon_thinking02.mtn"
+      },
+      {
+        "file": "nf01.mtn"
+      },
+      {
+        "file": "nf02.mtn"
+      },
+      {
+        "file": "nf03.mtn"
+      },
+      {
+        "file": "nf04.mtn"
+      },
+      {
+        "file": "nf05.mtn"
+      },
+      {
+        "file": "nf_left01.mtn"
+      },
+      {
+        "file": "nf_right01.mtn"
+      },
+      {
+        "file": "nnf01.mtn"
+      },
+      {
+        "file": "nnf02.mtn"
+      },
+      {
+        "file": "nnf03.mtn"
+      },
+      {
+        "file": "nnf04.mtn"
+      },
+      {
+        "file": "nnf05.mtn"
+      },
+      {
+        "file": "nnf_left01.mtn"
+      },
+      {
+        "file": "nnf_right01.mtn"
+      },
+      {
+        "file": "nod01.mtn"
+      },
+      {
+        "file": "odoodo01.mtn"
+      },
+      {
+        "file": "sad01.mtn"
+      },
+      {
+        "file": "sad02.mtn"
+      },
+      {
+        "file": "serious01.mtn"
+      },
+      {
+        "file": "serious02.mtn"
+      },
+      {
+        "file": "shame01.mtn"
+      },
+      {
+        "file": "shame02.mtn"
+      },
+      {
+        "file": "sigh01.mtn"
+      },
+      {
+        "file": "sigh02.mtn"
+      },
+      {
+        "file": "smile01.mtn"
+      },
+      {
+        "file": "smile02.mtn"
+      },
+      {
+        "file": "smile03.mtn"
+      },
+      {
+        "file": "smile04.mtn"
+      },
+      {
+        "file": "smile05.mtn"
+      },
+      {
+        "file": "smile06.mtn"
+      },
+      {
+        "file": "smile07.mtn"
+      },
+      {
+        "file": "surprised01.mtn"
+      },
+      {
+        "file": "surprised02.mtn"
+      },
+      {
+        "file": "thinking01.mtn"
+      },
+      {
+        "file": "thinking02.mtn"
+      }
+    ],
+    "angry01": [
+      {
+        "file": "angry01.mtn"
+      }
+    ],
+    "angry02": [
+      {
+        "file": "angry02.mtn"
+      }
+    ],
+    "angry03": [
+      {
+        "file": "angry03.mtn"
+      }
+    ],
+    "angry04": [
+      {
+        "file": "angry04.mtn"
+      }
+    ],
+    "angry05": [
+      {
+        "file": "angry05.mtn"
+      }
+    ],
+    "angry06": [
+      {
+        "file": "angry06.mtn"
+      }
+    ],
+    "angry07": [
+      {
+        "file": "angry07.mtn"
+      }
+    ],
+    "bow": [
+      {
+        "file": "bow.mtn"
+      }
+    ],
+    "bye01": [
+      {
+        "file": "bye01.mtn"
+      }
+    ],
+    "bye02": [
+      {
+        "file": "bye02.mtn"
+      }
+    ],
+    "cry01": [
+      {
+        "file": "cry01.mtn"
+      }
+    ],
+    "cry02": [
+      {
+        "file": "cry02.mtn"
+      }
+    ],
+    "cry03": [
+      {
+        "file": "cry03.mtn"
+      }
+    ],
+    "cry04": [
+      {
+        "file": "cry04.mtn"
+      }
+    ],
+    "cry05": [
+      {
+        "file": "cry05.mtn"
+      }
+    ],
+    "cry06": [
+      {
+        "file": "cry06.mtn"
+      }
+    ],
+    "kime01": [
+      {
+        "file": "kime01.mtn"
+      }
+    ],
+    "maskoff": [
+      {
+        "file": "maskoff.mtn"
+      }
+    ],
+    "maskon_angry01": [
+      {
+        "file": "maskon_angry01.mtn"
+      }
+    ],
+    "maskon_angry02": [
+      {
+        "file": "maskon_angry02.mtn"
+      }
+    ],
+    "maskon_angry03": [
+      {
+        "file": "maskon_angry03.mtn"
+      }
+    ],
+    "maskon_angry04": [
+      {
+        "file": "maskon_angry04.mtn"
+      }
+    ],
+    "maskon_angry05": [
+      {
+        "file": "maskon_angry05.mtn"
+      }
+    ],
+    "maskon_angry06": [
+      {
+        "file": "maskon_angry06.mtn"
+      }
+    ],
+    "maskon_angry07": [
+      {
+        "file": "maskon_angry07.mtn"
+      }
+    ],
+    "maskon_bow": [
+      {
+        "file": "maskon_bow.mtn"
+      }
+    ],
+    "maskon_bye01": [
+      {
+        "file": "maskon_bye01.mtn"
+      }
+    ],
+    "maskon_bye02": [
+      {
+        "file": "maskon_bye02.mtn"
+      }
+    ],
+    "maskon_cry01": [
+      {
+        "file": "maskon_cry01.mtn"
+      }
+    ],
+    "maskon_cry02": [
+      {
+        "file": "maskon_cry02.mtn"
+      }
+    ],
+    "maskon_cry03": [
+      {
+        "file": "maskon_cry03.mtn"
+      }
+    ],
+    "maskon_cry04": [
+      {
+        "file": "maskon_cry04.mtn"
+      }
+    ],
+    "maskon_cry05": [
+      {
+        "file": "maskon_cry05.mtn"
+      }
+    ],
+    "maskon_cry06": [
+      {
+        "file": "maskon_cry06.mtn"
+      }
+    ],
+    "maskon_kime01": [
+      {
+        "file": "maskon_kime01.mtn"
+      }
+    ],
+    "maskon_nf01": [
+      {
+        "file": "maskon_nf01.mtn"
+      }
+    ],
+    "maskon_nf02": [
+      {
+        "file": "maskon_nf02.mtn"
+      }
+    ],
+    "maskon_nf03": [
+      {
+        "file": "maskon_nf03.mtn"
+      }
+    ],
+    "maskon_nf04": [
+      {
+        "file": "maskon_nf04.mtn"
+      }
+    ],
+    "maskon_nf05": [
+      {
+        "file": "maskon_nf05.mtn"
+      }
+    ],
+    "maskon_nf_left01": [
+      {
+        "file": "maskon_nf_left01.mtn"
+      }
+    ],
+    "maskon_nf_right01": [
+      {
+        "file": "maskon_nf_right01.mtn"
+      }
+    ],
+    "maskon_nnf01": [
+      {
+        "file": "maskon_nnf01.mtn"
+      }
+    ],
+    "maskon_nnf02": [
+      {
+        "file": "maskon_nnf02.mtn"
+      }
+    ],
+    "maskon_nnf03": [
+      {
+        "file": "maskon_nnf03.mtn"
+      }
+    ],
+    "maskon_nnf04": [
+      {
+        "file": "maskon_nnf04.mtn"
+      }
+    ],
+    "maskon_nnf05": [
+      {
+        "file": "maskon_nnf05.mtn"
+      }
+    ],
+    "maskon_nnf_left01": [
+      {
+        "file": "maskon_nnf_left01.mtn"
+      }
+    ],
+    "maskon_nnf_right01": [
+      {
+        "file": "maskon_nnf_right01.mtn"
+      }
+    ],
+    "maskon_nod01": [
+      {
+        "file": "maskon_nod01.mtn"
+      }
+    ],
+    "maskon_odoodo01": [
+      {
+        "file": "maskon_odoodo01.mtn"
+      }
+    ],
+    "maskon_sad01": [
+      {
+        "file": "maskon_sad01.mtn"
+      }
+    ],
+    "maskon_sad02": [
+      {
+        "file": "maskon_sad02.mtn"
+      }
+    ],
+    "maskon_serious01": [
+      {
+        "file": "maskon_serious01.mtn"
+      }
+    ],
+    "maskon_serious02": [
+      {
+        "file": "maskon_serious02.mtn"
+      }
+    ],
+    "maskon_shame01": [
+      {
+        "file": "maskon_shame01.mtn"
+      }
+    ],
+    "maskon_shame02": [
+      {
+        "file": "maskon_shame02.mtn"
+      }
+    ],
+    "maskon_sigh01": [
+      {
+        "file": "maskon_sigh01.mtn"
+      }
+    ],
+    "maskon_sigh02": [
+      {
+        "file": "maskon_sigh02.mtn"
+      }
+    ],
+    "maskon_smile01": [
+      {
+        "file": "maskon_smile01.mtn"
+      }
+    ],
+    "maskon_smile02": [
+      {
+        "file": "maskon_smile02.mtn"
+      }
+    ],
+    "maskon_smile03": [
+      {
+        "file": "maskon_smile03.mtn"
+      }
+    ],
+    "maskon_smile04": [
+      {
+        "file": "maskon_smile04.mtn"
+      }
+    ],
+    "maskon_smile05": [
+      {
+        "file": "maskon_smile05.mtn"
+      }
+    ],
+    "maskon_smile06": [
+      {
+        "file": "maskon_smile06.mtn"
+      }
+    ],
+    "maskon_smile07": [
+      {
+        "file": "maskon_smile07.mtn"
+      }
+    ],
+    "maskon_surprised01": [
+      {
+        "file": "maskon_surprised01.mtn"
+      }
+    ],
+    "maskon_surprised02": [
+      {
+        "file": "maskon_surprised02.mtn"
+      }
+    ],
+    "maskon_thinking01": [
+      {
+        "file": "maskon_thinking01.mtn"
+      }
+    ],
+    "maskon_thinking02": [
+      {
+        "file": "maskon_thinking02.mtn"
+      }
+    ],
+    "nf01": [
+      {
+        "file": "nf01.mtn"
+      }
+    ],
+    "nf02": [
+      {
+        "file": "nf02.mtn"
+      }
+    ],
+    "nf03": [
+      {
+        "file": "nf03.mtn"
+      }
+    ],
+    "nf04": [
+      {
+        "file": "nf04.mtn"
+      }
+    ],
+    "nf05": [
+      {
+        "file": "nf05.mtn"
+      }
+    ],
+    "nf_left01": [
+      {
+        "file": "nf_left01.mtn"
+      }
+    ],
+    "nf_right01": [
+      {
+        "file": "nf_right01.mtn"
+      }
+    ],
+    "nnf01": [
+      {
+        "file": "nnf01.mtn"
+      }
+    ],
+    "nnf02": [
+      {
+        "file": "nnf02.mtn"
+      }
+    ],
+    "nnf03": [
+      {
+        "file": "nnf03.mtn"
+      }
+    ],
+    "nnf04": [
+      {
+        "file": "nnf04.mtn"
+      }
+    ],
+    "nnf05": [
+      {
+        "file": "nnf05.mtn"
+      }
+    ],
+    "nnf_left01": [
+      {
+        "file": "nnf_left01.mtn"
+      }
+    ],
+    "nnf_right01": [
+      {
+        "file": "nnf_right01.mtn"
+      }
+    ],
+    "nod01": [
+      {
+        "file": "nod01.mtn"
+      }
+    ],
+    "odoodo01": [
+      {
+        "file": "odoodo01.mtn"
+      }
+    ],
+    "sad01": [
+      {
+        "file": "sad01.mtn"
+      }
+    ],
+    "sad02": [
+      {
+        "file": "sad02.mtn"
+      }
+    ],
+    "serious01": [
+      {
+        "file": "serious01.mtn"
+      }
+    ],
+    "serious02": [
+      {
+        "file": "serious02.mtn"
+      }
+    ],
+    "shame01": [
+      {
+        "file": "shame01.mtn"
+      }
+    ],
+    "shame02": [
+      {
+        "file": "shame02.mtn"
+      }
+    ],
+    "sigh01": [
+      {
+        "file": "sigh01.mtn"
+      }
+    ],
+    "sigh02": [
+      {
+        "file": "sigh02.mtn"
+      }
+    ],
+    "smile01": [
+      {
+        "file": "smile01.mtn"
+      }
+    ],
+    "smile02": [
+      {
+        "file": "smile02.mtn"
+      }
+    ],
+    "smile03": [
+      {
+        "file": "smile03.mtn"
+      }
+    ],
+    "smile04": [
+      {
+        "file": "smile04.mtn"
+      }
+    ],
+    "smile05": [
+      {
+        "file": "smile05.mtn"
+      }
+    ],
+    "smile06": [
+      {
+        "file": "smile06.mtn"
+      }
+    ],
+    "smile07": [
+      {
+        "file": "smile07.mtn"
+      }
+    ],
+    "surprised01": [
+      {
+        "file": "surprised01.mtn"
+      }
+    ],
+    "surprised02": [
+      {
+        "file": "surprised02.mtn"
+      }
+    ],
+    "thinking01": [
+      {
+        "file": "thinking01.mtn"
+      }
+    ],
+    "thinking02": [
+      {
+        "file": "thinking02.mtn"
+      }
+    ]
+  },
+  "expressions": [
+    {
+      "file": "angry01.exp.json"
+    },
+    {
+      "file": "angry02.exp.json"
+    },
+    {
+      "file": "angry07.exp.json"
+    },
+    {
+      "file": "cry01.exp.json"
+    },
+    {
+      "file": "cry02.exp.json"
+    },
+    {
+      "file": "cry03.exp.json"
+    },
+    {
+      "file": "cry04.exp.json"
+    },
+    {
+      "file": "default.exp.json"
+    },
+    {
+      "file": "idle01.exp.json"
+    },
+    {
+      "file": "kime01.exp.json"
+    },
+    {
+      "file": "odoodo01.exp.json"
+    },
+    {
+      "file": "sad01.exp.json"
+    },
+    {
+      "file": "sad02.exp.json"
+    },
+    {
+      "file": "serious01.exp.json"
+    },
+    {
+      "file": "serious02.exp.json"
+    },
+    {
+      "file": "shame01.exp.json"
+    },
+    {
+      "file": "shame02.exp.json"
+    },
+    {
+      "file": "sigh01.exp.json"
+    },
+    {
+      "file": "sigh02.exp.json"
+    },
+    {
+      "file": "smile01.exp.json"
+    },
+    {
+      "file": "smile02.exp.json"
+    },
+    {
+      "file": "smile03.exp.json"
+    },
+    {
+      "file": "smile04.exp.json"
+    },
+    {
+      "file": "smile05.exp.json"
+    },
+    {
+      "file": "smile06.exp.json"
+    },
+    {
+      "file": "surprised01.exp.json"
+    },
+    {
+      "file": "surprised02.exp.json"
+    },
+    {
+      "file": "thinking01.exp.json"
+    },
+    {
+      "file": "thinking02.exp.json"
+    }
+  ]
+}

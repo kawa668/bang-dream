@@ -8,7 +8,8 @@ const DEST_ROOT = process.env['LIVE2D_DEST_ROOT'] ?? 'src/renderer/public/models
 
 const CHARACTERS = [
   { prefix: '338', displayName: '若叶睦', legacyIds: true },
-  { prefix: '037', displayName: '千早爱音', legacyIds: false }
+  { prefix: '037', displayName: '千早爱音', legacyIds: false },
+  { prefix: '341', displayName: '丰川祥子', legacyIds: false }
 ]
 
 function legacy338Id(dir: string): OutfitId | null {
@@ -22,7 +23,7 @@ function legacy338Id(dir: string): OutfitId | null {
 }
 
 function prettyName(dir: string): string {
-  return dir.replace(/^(338|037)_/, '').replace(/[-_]/g, ' ')
+  return dir.replace(/^(338|037|341)_/, '').replace(/[-_]/g, ' ')
 }
 
 async function collectOutfits(): Promise<Array<{ id: OutfitId; displayName: string; sourceDir: string; generalDir: string }>> {

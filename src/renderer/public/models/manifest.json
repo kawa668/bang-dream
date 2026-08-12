@@ -103,5 +103,30 @@
     "id": "037_school_winter-2023",
     "displayName": "千早爱音·school winter 2023",
     "modelJsonUrl": "models/037_school_winter-2023/model.json"
+  },
+  {
+    "id": "341_casual-2023",
+    "displayName": "丰川祥子·casual 2023",
+    "modelJsonUrl": "models/341_casual-2023/model.json"
+  },
+  {
+    "id": "341_event_297_story_01",
+    "displayName": "丰川祥子·event 297 story 01",
+    "modelJsonUrl": "models/341_event_297_story_01/model.json"
+  },
+  {
+    "id": "341_jh_school_winter-2023",
+    "displayName": "丰川祥子·jh school winter 2023",
+    "modelJsonUrl": "models/341_jh_school_winter-2023/model.json"
+  },
+  {
+    "id": "341_school_summer-2023",
+    "displayName": "丰川祥子·school summer 2023",
+    "modelJsonUrl": "models/341_school_summer-2023/model.json"
+  },
+  {
+    "id": "341_school_winter-2023",
+    "displayName": "丰川祥子·school winter 2023",
+    "modelJsonUrl": "models/341_school_winter-2023/model.json"
   }
 ]
