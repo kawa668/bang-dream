@@ -13,6 +13,7 @@ export class Live2DRenderer {
   private dragPointerId = -1
   private dragOffsetX = 0
   private dragOffsetY = 0
+  private position: { x: number; y: number } | null = null
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas
@@ -36,7 +37,10 @@ export class Live2DRenderer {
   async load(modelJsonUrl: string): Promise<void> {
     const model = await Live2DModel.from(modelJsonUrl, { autoInteract: false })
     model.anchor.set(0.5, 0.5)
-    if (this.model) this.model.destroy()
+    if (this.model) {
+      this.position = { x: this.model.x, y: this.model.y }
+      this.model.destroy()
+    }
     this.model = model
     this.app.stage.addChild(model)
     this.resize()
@@ -135,7 +139,8 @@ export class Live2DRenderer {
   private onPointerMove = (event: PointerEvent): void => {
     const point = this.toCanvasPoint(event)
     if (this.dragging && event.pointerId === this.dragPointerId && this.model) {
-      this.model.position.set(point.x + this.dragOffsetX, point.y + this.dragOffsetY)
+      this.position = { x: point.x + this.dragOffsetX, y: point.y + this.dragOffsetY }
+      this.model.position.set(this.position.x, this.position.y)
       this.reportBounds()
     }
   }
@@ -160,7 +165,7 @@ export class Live2DRenderer {
       const targetHeight = Math.min(height * 0.45, 700)
       const scale = Math.min(width / Math.max(bounds.width, 1), targetHeight / Math.max(bounds.height, 1))
       this.model.scale.set(scale)
-      this.model.position.set(width / 2, height / 2)
+      this.model.position.set(this.position?.x ?? width / 2, this.position?.y ?? height / 2)
       this.reportBounds()
     }
   }
