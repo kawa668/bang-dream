@@ -27,11 +27,105 @@
       #model-buttons button { padding: 6px 10px; cursor: pointer; }
       #model-buttons button.active { font-weight: 700; outline: 2px solid #2f6feb; }
       #status { white-space: pre-wrap; }
+      #chat-window {
+        display: flex;
+        flex-direction: column;
+        height: 280px;
+        border: 1px solid #ccc;
+        margin: 8px 0;
+      }
+      #chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 8px;
+        background: #fafafa;
+      }
+      .chat-message {
+        margin: 6px 0;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .chat-message .chat-author {
+        font-weight: 700;
+        margin-right: 6px;
+      }
+      .chat-user {
+        text-align: right;
+      }
+      #chat-input-row {
+        display: flex;
+        gap: 6px;
+        padding: 8px;
+        border-top: 1px solid #ddd;
+      }
+      #chat-input {
+        flex: 1;
+      }
+      details {
+        border: 1px solid #ddd;
+        margin: 8px 0;
+        padding: 8px;
+      }
+      details label {
+        display: block;
+        margin: 6px 0;
+      }
+      details input,
+      details textarea {
+        width: 100%;
+        box-sizing: border-box;
+      }
     </style>
   </head>
   <body>
     <h1>控制台</h1>
     <p>热键：F1-F4 切换常用模型；更多模型用下方按钮切换</p>
+
+    <h2>聊天</h2>
+    <div id="chat-window">
+      <div id="chat-messages"></div>
+      <div id="chat-input-row">
+        <input id="chat-input" type="text" placeholder="和宠物说话..." />
+        <button id="chat-send">发送</button>
+        <button id="chat-clear">清空</button>
+      </div>
+    </div>
+    <p id="chat-status"></p>
+
+    <details id="llm-settings">
+      <summary>LLM 设置</summary>
+      <label>
+        Base URL
+        <input id="llm-base-url" type="url" placeholder="https://relay.example.com/v1" />
+      </label>
+      <label>
+        API Key
+        <input id="llm-api-key" type="password" placeholder="留空表示不修改" />
+      </label>
+      <label>
+        模型
+        <input id="llm-model" type="text" />
+      </label>
+      <label>
+        System Prompt
+        <textarea id="llm-system-prompt" rows="3"></textarea>
+      </label>
+      <label>
+        Temperature
+        <input id="llm-temperature" type="number" step="0.1" min="0" max="2" />
+      </label>
+      <label>
+        超时（毫秒）
+        <input id="llm-timeout" type="number" min="1000" />
+      </label>
+      <label>
+        历史消息数
+        <input id="llm-max-history" type="number" min="1" />
+      </label>
+      <button id="config-save">保存设置</button>
+    </details>
+    <p id="config-status"></p>
+
     <div id="model-buttons"></div>
     <label>指定动作</label>
     <div id="action-groups"></div>

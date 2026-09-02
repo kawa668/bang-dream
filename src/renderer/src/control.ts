@@ -1,15 +1,106 @@
 import { groupActions } from '../../shared/actionCategories'
 import { groupModelsByCharacter } from '../../shared/modelCategories'
 import type { ModelDescriptor, OutfitId } from '../../shared/types'
+import type { LLMSettingsSave, LLMSettingsView } from '../../shared/chat'
 
 const status = document.querySelector<HTMLParagraphElement>('#status')
 const modelButtons = document.querySelector<HTMLDivElement>('#model-buttons')
 const actionGroups = document.querySelector<HTMLDivElement>('#action-groups')
+const chatMessages = document.querySelector<HTMLDivElement>('#chat-messages')
+const chatInput = document.querySelector<HTMLInputElement>('#chat-input')
+const chatSend = document.querySelector<HTMLButtonElement>('#chat-send')
+const chatClearButton = document.querySelector<HTMLButtonElement>('#chat-clear')
+const chatStatus = document.querySelector<HTMLParagraphElement>('#chat-status')
+const baseUrlInput = document.querySelector<HTMLInputElement>('#llm-base-url')
+const apiKeyInput = document.querySelector<HTMLInputElement>('#llm-api-key')
+const modelInput = document.querySelector<HTMLInputElement>('#llm-model')
+const systemPromptInput = document.querySelector<HTMLTextAreaElement>('#llm-system-prompt')
+const temperatureInput = document.querySelector<HTMLInputElement>('#llm-temperature')
+const timeoutInput = document.querySelector<HTMLInputElement>('#llm-timeout')
+const maxHistoryInput = document.querySelector<HTMLInputElement>('#llm-max-history')
+const configSave = document.querySelector<HTMLButtonElement>('#config-save')
+const configStatus = document.querySelector<HTMLParagraphElement>('#config-status')
+
+let assistantContent: HTMLDivElement | null = null
 
 const manifestByModel = new Map<OutfitId, ModelDescriptor>()
 const actionsByModel = new Map<OutfitId, string[]>()
 let renderSequence = 0
 let currentModel: OutfitId = 'casual'
+
+function appendChatMessage(role: 'user' | 'assistant' | 'system', text: string): HTMLDivElement {
+  const message = document.createElement('div')
+  message.className = `chat-message chat-${role}`
+  const author = document.createElement('span')
+  author.className = 'chat-author'
+  author.textContent = role === 'user' ? '你' : role === 'assistant' ? '宠物' : '系统'
+  const content = document.createElement('div')
+  content.className = 'chat-content'
+  content.textContent = text
+  message.appendChild(author)
+  message.appendChild(content)
+  chatMessages?.appendChild(message)
+  if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight
+  return message
+}
+
+function clearChatMessages(): void {
+  if (chatMessages) chatMessages.innerHTML = ''
+  assistantContent = null
+}
+
+async function sendChatMessage(): Promise<void> {
+  if (!chatInput) return
+  const text = chatInput.value
+  if (!text.trim()) return
+  appendChatMessage('user', text.trim())
+  chatInput.value = ''
+  window.api.sendChatMessage(text)
+}
+
+async function loadConfig(): Promise<void> {
+  try {
+    const view: LLMSettingsView | null = await window.api.getConfig()
+    if (!view) return
+    if (baseUrlInput) baseUrlInput.value = view.baseUrl
+    if (modelInput) modelInput.value = view.model
+    if (systemPromptInput) systemPromptInput.value = view.systemPrompt
+    if (temperatureInput) temperatureInput.value = String(view.temperature)
+    if (timeoutInput) timeoutInput.value = String(view.timeoutMs)
+    if (maxHistoryInput) maxHistoryInput.value = String(view.maxHistory)
+    if (apiKeyInput) apiKeyInput.value = ''
+    if (configStatus) {
+      configStatus.textContent = view.hasApiKey ? 'API Key 已保存' : '尚未保存 API Key'
+    }
+  } catch (error) {
+    if (configStatus) configStatus.textContent = error instanceof Error ? error.message : String(error)
+  }
+}
+
+async function saveConfig(): Promise<void> {
+  const settings: LLMSettingsSave = {
+    baseUrl: baseUrlInput?.value ?? '',
+    apiKey: apiKeyInput?.value ?? '',
+    model: modelInput?.value ?? '',
+    systemPrompt: systemPromptInput?.value ?? '',
+    temperature: Number(temperatureInput?.value ?? 0.8),
+    timeoutMs: Number(timeoutInput?.value ?? 30000),
+    maxHistory: Number(maxHistoryInput?.value ?? 20)
+  }
+  if (!settings.baseUrl.trim() || !settings.model.trim()) {
+    if (configStatus) configStatus.textContent = '请填写 Base URL 和模型名'
+    return
+  }
+  try {
+    const view = await window.api.saveConfig(settings)
+    if (view) {
+      if (apiKeyInput) apiKeyInput.value = ''
+      if (configStatus) configStatus.textContent = '设置已保存'
+    }
+  } catch (error) {
+    if (configStatus) configStatus.textContent = error instanceof Error ? error.message : String(error)
+  }
+}
 
 function createCollapseToggle(title: string, count: number, content: HTMLElement): HTMLButtonElement {
   const toggle = document.createElement('button')
@@ -121,6 +212,58 @@ window.api.onModelSwitch((id) => {
   void renderActions(id)
 })
 
+window.api.onChatStart(() => {
+  const message = appendChatMessage('assistant', '')
+  assistantContent = message.querySelector<HTMLDivElement>('.chat-content')
+  if (chatStatus) chatStatus.textContent = '正在回复...'
+})
+
+window.api.onChatDelta((delta) => {
+  if (assistantContent) assistantContent.textContent += delta
+  if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight
+})
+
+window.api.onChatComplete((message) => {
+  if (assistantContent) assistantContent.textContent = message
+  assistantContent = null
+  if (chatStatus) chatStatus.textContent = ''
+})
+
+window.api.onChatError((message) => {
+  if (assistantContent) {
+    assistantContent.textContent += `\n[${message}]`
+  } else {
+    appendChatMessage('system', message)
+  }
+  assistantContent = null
+  if (chatStatus) chatStatus.textContent = ''
+})
+
+window.api.onChatClear(() => {
+  clearChatMessages()
+})
+
+chatSend?.addEventListener('click', () => {
+  void sendChatMessage()
+})
+
+chatInput?.addEventListener('keydown', (event) => {
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault()
+    void sendChatMessage()
+  }
+})
+
+chatClearButton?.addEventListener('click', () => {
+  window.api.clearChat()
+  clearChatMessages()
+})
+
+configSave?.addEventListener('click', () => {
+  void saveConfig()
+})
+
+void loadConfig()
 void renderActions('casual')
 void renderModelButtons()
 
