@@ -9,6 +9,14 @@ import { OpenAICompatibleProvider } from './chat/llmProvider'
 import { ConfigService } from './config'
 import { ElectronSecretStore } from './electronSecretStore'
 import type { AppConfig, LLMSettingsSave } from '../shared/chat'
+import type { VoiceId, VoiceStateMessage } from '../shared/voice'
+import { isVoiceId } from '../shared/voice'
+import { GPTSoVITSProvider } from './voice/gptSoVITSProvider'
+import { TTSManager } from './voice/ttsManager'
+import { ElectronVoiceProcessLauncher } from './voice/electronVoiceProcessLauncher'
+import { buildVoiceCatalog } from './voice/voiceCatalog'
+import { AudioPlayer } from './voice/audioPlayer'
+import { ElectronAudioSink } from './voice/electronAudioSink'
 
 const SHORTCUTS: Array<[string, string]> = [
   ['F1', 'casual'],
@@ -26,6 +34,11 @@ let mouseInterceptEnabled = false
 let chatManager: ChatManager | null = null
 let configService: ConfigService | null = null
 let appConfig: AppConfig | null = null
+let voiceManager: TTSManager | null = null
+let audioPlayer: AudioPlayer | null = null
+let audioSink: ElectronAudioSink | null = null
+let currentModelId: string | null = null
+let quitting = false
 
 function createOutputWindow(): BrowserWindow {
   const { workArea } = screen.getPrimaryDisplay()
@@ -86,6 +99,13 @@ function broadcastChatEvent(event: ChatEvent): void {
   if (event.type === 'error') controlWindow.webContents.send('chat:error', event)
 }
 
+function handleChatEvent(event: ChatEvent): void {
+  broadcastChatEvent(event)
+  if (event.type === 'complete') {
+    void voiceManager?.speak(event.message, event.requestId)
+  }
+}
+
 function rebuildChatManager(): void {
   if (!configService || !appConfig) return
   const conversation = new ConversationManager(
@@ -99,7 +119,33 @@ function rebuildChatManager(): void {
     temperature: appConfig.llm.temperature,
     timeoutMs: appConfig.llm.timeoutMs
   })
-  chatManager = new ChatManager(conversation, provider, broadcastChatEvent)
+  chatManager = new ChatManager(conversation, provider, handleChatEvent)
+}
+
+function setupVoiceSystem(): void {
+  if (!configService || !appConfig) return
+  const sink = new ElectronAudioSink(() => outputWindow)
+  audioSink = sink
+  const player = new AudioPlayer(sink)
+  audioPlayer = player
+  voiceManager = new TTSManager({
+    voiceConfig: appConfig.voice,
+    catalog: buildVoiceCatalog({
+      gptSovitsDir: appConfig.voice.gptSovitsDir,
+      trainingAudioDir: appConfig.voice.trainingAudioDir
+    }),
+    provider: new GPTSoVITSProvider({ endpoint: appConfig.voice.ttsEndpoint }),
+    launcher: new ElectronVoiceProcessLauncher(),
+    persist: (changes) => {
+      if (!configService || !appConfig) return
+      appConfig = configService.applyVoiceConfig(appConfig, changes)
+      void configService.save(appConfig).catch(() => {})
+    },
+    onState: (message: VoiceStateMessage) => {
+      controlWindow?.webContents.send('voice:state', message)
+    },
+    play: (requestId, audio) => player.enqueue(requestId, audio)
+  })
 }
 
 app.whenReady().then(async () => {
@@ -108,6 +154,7 @@ app.whenReady().then(async () => {
     new ElectronSecretStore()
   )
   appConfig = await configService.load()
+  setupVoiceSystem()
   rebuildChatManager()
 
   createOutputWindow()
@@ -122,7 +169,9 @@ app.whenReady().then(async () => {
   })
 
   ipcMain.on('model:changed', (_event, id: string) => {
+    currentModelId = id
     controlWindow?.webContents.send('model:switch', id)
+    voiceManager?.setModel(id)
   })
 
   ipcMain.on('model:switch-request', (_event, id: string) => {
@@ -150,6 +199,43 @@ app.whenReady().then(async () => {
     if (!payload?.requestId) return
     chatManager?.clear()
     controlWindow?.webContents.send('chat:clear', payload)
+  })
+
+  ipcMain.handle('voice:get', () => voiceManager?.stateMessage() ?? null)
+
+  ipcMain.on('voice:set-enabled', (_event, payload: {
+    requestId: string
+    enabled: boolean
+  }) => {
+    if (!payload?.requestId) return
+    void voiceManager?.setEnabled(Boolean(payload.enabled), payload.requestId)
+  })
+
+  ipcMain.on('voice:set-voice', (_event, payload: {
+    requestId: string
+    voiceId: VoiceId
+  }) => {
+    if (!payload?.requestId || !isVoiceId(payload.voiceId)) return
+    voiceManager?.setVoice(payload.voiceId, payload.requestId)
+  })
+
+  ipcMain.on('voice:playback-ended', (_event, payload: {
+    requestId: string
+    playbackId: string
+  }) => {
+    audioSink?.handlePlaybackEnded(payload.requestId, payload.playbackId)
+  })
+
+  ipcMain.on('voice:playback-error', (_event, payload: {
+    requestId: string
+    playbackId: string
+    message: string
+  }) => {
+    audioSink?.handlePlaybackError(
+      payload.requestId,
+      payload.playbackId,
+      payload.message
+    )
   })
 
   ipcMain.handle('config:get', () => {
@@ -198,6 +284,16 @@ app.whenReady().then(async () => {
       createOutputWindow()
       createControlWindow()
     }
+  })
+})
+
+app.on('before-quit', (event) => {
+  if (!voiceManager || quitting) return
+  event.preventDefault()
+  quitting = true
+  void voiceManager.dispose().finally(() => {
+    audioPlayer?.stopAll()
+    app.quit()
   })
 })
 

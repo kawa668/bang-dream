@@ -72,41 +72,41 @@ export class TTSManager {
     }
   }
 
-  setVoice(voiceId: VoiceId): void {
+  setVoice(voiceId: VoiceId, requestId?: string): void {
     if (!isVoiceId(voiceId) || this.selectedVoice === voiceId) return
     this.selectedVoice = voiceId
     this.persist({ enabled: this.enabled, selectedVoice: voiceId })
-    this.setRuntimeState(this.enabled ? 'idle' : 'off')
+    this.setRuntimeState(this.enabled ? 'idle' : 'off', requestId)
     if (this.process || this.startPromise) {
-      void this.ensureVoiceLoaded(voiceId)
+      void this.ensureVoiceLoaded(voiceId, requestId)
     }
   }
 
-  async setEnabled(enabled: boolean): Promise<void> {
+  async setEnabled(enabled: boolean, requestId?: string): Promise<void> {
     if (enabled === this.enabled) return
     this.enabled = enabled
     this.persist({ enabled, selectedVoice: this.selectedVoice })
 
     if (enabled) {
       try {
-        await this.ensureStarted()
-        await this.ensureVoiceLoaded(this.selectedVoice)
-        this.setRuntimeState('idle')
+        await this.ensureStarted(requestId)
+        await this.ensureVoiceLoaded(this.selectedVoice, requestId)
+        this.setRuntimeState('idle', requestId)
       } catch (error) {
-        this.setRuntimeState('error', undefined, errorText(error))
+        this.setRuntimeState('error', requestId, errorText(error))
       }
     } else {
-      this.setRuntimeState('stopping')
+      this.setRuntimeState('stopping', requestId)
       await this.stopService()
-      this.setRuntimeState('off')
+      this.setRuntimeState('off', requestId)
     }
   }
 
   speak(text: string, requestId: string): Promise<void> {
     const task = this.speechTail.then(async () => {
       if (!this.enabled || this.disposed) return
-      await this.ensureStarted()
-      await this.ensureVoiceLoaded(this.selectedVoice)
+      await this.ensureStarted(requestId)
+      await this.ensureVoiceLoaded(this.selectedVoice, requestId)
       const profile = this.catalog[this.selectedVoice]
       this.setRuntimeState('synthesizing', requestId)
       const audio = await this.provider.synthesize(profile, text)
@@ -129,9 +129,9 @@ export class TTSManager {
     await this.stopService()
   }
 
-  private async ensureStarted(): Promise<void> {
+  private async ensureStarted(requestId?: string): Promise<void> {
     if (this.startPromise) return this.startPromise
-    this.setRuntimeState('starting')
+    this.setRuntimeState('starting', requestId)
     this.startPromise = (async () => {
       if (await this.provider.probeReady()) {
         this.managed = false
@@ -162,12 +162,12 @@ export class TTSManager {
     return this.startPromise
   }
 
-  private ensureVoiceLoaded(voiceId: VoiceId): Promise<void> {
+  private ensureVoiceLoaded(voiceId: VoiceId, requestId?: string): Promise<void> {
     if (this.loadedVoice === voiceId) return Promise.resolve()
     const previous = this.voiceLoadPromise ?? Promise.resolve()
     const task = previous.then(async () => {
       if (this.loadedVoice === voiceId) return
-      this.setRuntimeState('loading-voice')
+      this.setRuntimeState('loading-voice', requestId)
       await this.provider.loadVoice(this.catalog[voiceId])
       this.loadedVoice = voiceId
     })

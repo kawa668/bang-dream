@@ -3,6 +3,8 @@ import { groupModelsByCharacter } from '../../shared/modelCategories'
 import type { ModelDescriptor, OutfitId } from '../../shared/types'
 import type { LLMSettingsSave, LLMSettingsView } from '../../shared/chat'
 import { createRequestId } from '../../shared/requestId'
+import { VOICE_OPTIONS } from '../../shared/voice'
+import type { VoiceStateMessage } from '../../shared/voice'
 
 const status = document.querySelector<HTMLParagraphElement>('#status')
 const modelButtons = document.querySelector<HTMLDivElement>('#model-buttons')
@@ -21,8 +23,22 @@ const timeoutInput = document.querySelector<HTMLInputElement>('#llm-timeout')
 const maxHistoryInput = document.querySelector<HTMLInputElement>('#llm-max-history')
 const configSave = document.querySelector<HTMLButtonElement>('#config-save')
 const configStatus = document.querySelector<HTMLParagraphElement>('#config-status')
+const voiceEnabled = document.querySelector<HTMLInputElement>('#voice-enabled')
+const voiceSelect = document.querySelector<HTMLSelectElement>('#voice-select')
+const voiceStatus = document.querySelector<HTMLParagraphElement>('#voice-status')
 
 let assistantContent: HTMLDivElement | null = null
+
+const VOICE_STATE_LABELS: Record<string, string> = {
+  off: '语音回复已关闭',
+  idle: '语音服务空闲',
+  starting: '正在启动 GPT-SoVITS...',
+  'loading-voice': '正在加载音色...',
+  synthesizing: '正在合成语音...',
+  playing: '正在播放语音...',
+  stopping: '正在停止语音服务...',
+  error: '语音服务错误'
+}
 
 const manifestByModel = new Map<OutfitId, ModelDescriptor>()
 const actionsByModel = new Map<OutfitId, string[]>()
@@ -100,6 +116,43 @@ async function saveConfig(): Promise<void> {
     }
   } catch (error) {
     if (configStatus) configStatus.textContent = error instanceof Error ? error.message : String(error)
+  }
+}
+
+function renderVoiceOptions(): void {
+  if (!voiceSelect) return
+  voiceSelect.innerHTML = ''
+  for (const option of VOICE_OPTIONS) {
+    const element = document.createElement('option')
+    element.value = option.id
+    element.textContent = option.displayName
+    voiceSelect.appendChild(element)
+  }
+}
+
+function applyVoiceState(message: VoiceStateMessage): void {
+  const state = message.state
+  if (voiceEnabled && voiceEnabled.checked !== state.enabled) {
+    voiceEnabled.checked = state.enabled
+  }
+  if (voiceSelect && voiceSelect.value !== state.selectedVoice) {
+    voiceSelect.value = state.selectedVoice
+  }
+  if (!voiceStatus) return
+  const label = VOICE_STATE_LABELS[state.runtimeState] ?? state.runtimeState
+  voiceStatus.textContent = state.message && state.runtimeState === 'error'
+    ? `${label}：${state.message}`
+    : label
+}
+
+async function loadVoiceState(): Promise<void> {
+  try {
+    const message = await window.api.getVoiceState()
+    if (message) applyVoiceState(message)
+  } catch (error) {
+    if (voiceStatus) {
+      voiceStatus.textContent = error instanceof Error ? error.message : String(error)
+    }
   }
 }
 
@@ -264,7 +317,22 @@ configSave?.addEventListener('click', () => {
   void saveConfig()
 })
 
+voiceEnabled?.addEventListener('change', () => {
+  window.api.setVoiceEnabled(createRequestId('voice-enabled'), voiceEnabled.checked)
+})
+
+voiceSelect?.addEventListener('change', () => {
+  const option = VOICE_OPTIONS.find((voice) => voice.id === voiceSelect.value)
+  if (option) window.api.setVoiceId(createRequestId('voice-select'), option.id)
+})
+
+window.api.onVoiceState((message) => {
+  applyVoiceState(message)
+})
+
 void loadConfig()
+void loadVoiceState()
+renderVoiceOptions()
 void renderActions('casual')
 void renderModelButtons()
 

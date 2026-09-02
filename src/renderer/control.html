@@ -61,6 +61,18 @@
       #chat-input {
         flex: 1;
       }
+      #voice-controls {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 6px 0;
+      }
+      #voice-status {
+        margin: 4px 0;
+        font-size: 13px;
+        color: #555;
+        white-space: pre-wrap;
+      }
       details {
         border: 1px solid #ddd;
         margin: 8px 0;
@@ -91,6 +103,18 @@
       </div>
     </div>
     <p id="chat-status"></p>
+
+    <div id="voice-controls">
+      <label>
+        <input id="voice-enabled" type="checkbox" />
+        语音回复
+      </label>
+      <label>
+        音色
+        <select id="voice-select"></select>
+      </label>
+    </div>
+    <p id="voice-status"></p>
 
     <details id="llm-settings">
       <summary>LLM 设置</summary>

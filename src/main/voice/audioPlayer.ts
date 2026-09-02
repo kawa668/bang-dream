@@ -3,7 +3,7 @@ import type { RequestId } from '../../shared/requestId'
 
 export interface PlaybackSink {
   play(requestId: RequestId, playbackId: string, audio: Uint8Array): Promise<void>
-  stop(playbackId: string): void
+  stop(requestId: RequestId, playbackId: string): void
 }
 
 interface QueueItem {
@@ -38,7 +38,7 @@ export class AudioPlayer {
     if (this.current) {
       const current = this.current
       this.current = null
-      this.sink.stop(current.playbackId)
+      this.sink.stop(current.requestId, current.playbackId)
       current.reject(new Error('语音播放已停止'))
     }
   }

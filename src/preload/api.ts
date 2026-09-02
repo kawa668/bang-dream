@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer } from 'electron'
 import type { OutfitId } from '../shared/types'
 import type { LLMSettingsSave, LLMSettingsView } from '../shared/chat'
 import type { RequestId } from '../shared/requestId'
+import type { VoiceId, VoiceStateMessage } from '../shared/voice'
 
 const api = {
   onModelSwitch: (callback: (id: OutfitId) => void): (() => void) => {
@@ -99,6 +100,18 @@ const api = {
   },
   reportVoiceError: (requestId: RequestId, playbackId: string, message: string): void => {
     ipcRenderer.send('voice:playback-error', { requestId, playbackId, message })
+  },
+  getVoiceState: (): Promise<VoiceStateMessage | null> => ipcRenderer.invoke('voice:get'),
+  setVoiceEnabled: (requestId: RequestId, enabled: boolean): void => {
+    ipcRenderer.send('voice:set-enabled', { requestId, enabled })
+  },
+  setVoiceId: (requestId: RequestId, voiceId: VoiceId): void => {
+    ipcRenderer.send('voice:set-voice', { requestId, voiceId })
+  },
+  onVoiceState: (callback: (message: VoiceStateMessage) => void): (() => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, message: VoiceStateMessage): void => callback(message)
+    ipcRenderer.on('voice:state', listener)
+    return () => ipcRenderer.removeListener('voice:state', listener)
   },
   getConfig: (): Promise<LLMSettingsView | null> => ipcRenderer.invoke('config:get'),
   saveConfig: (settings: LLMSettingsSave): Promise<LLMSettingsView | null> => (

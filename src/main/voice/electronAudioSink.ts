@@ -35,10 +35,10 @@ export class ElectronAudioSink implements PlaybackSink {
     })
   }
 
-  stop(playbackId: string): void {
+  stop(requestId: RequestId, playbackId: string): void {
     const window = this.getWindow()
     if (window && !window.isDestroyed()) {
-      window.webContents.send('voice:stop', { playbackId })
+      window.webContents.send('voice:stop', { requestId, playbackId })
     }
     this.settle(playbackId, new Error('语音播放已停止'))
   }

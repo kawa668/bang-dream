@@ -1,6 +1,7 @@
 import type { OutfitId } from '../../shared/types'
 import type { LLMSettingsSave, LLMSettingsView } from '../../shared/chat'
 import type { RequestId } from '../../shared/requestId'
+import type { VoiceId, VoiceStateMessage } from '../../shared/voice'
 
 declare global {
   interface Window {
@@ -33,6 +34,10 @@ declare global {
       }) => void) => () => void
       reportVoiceEnded: (requestId: RequestId, playbackId: string) => void
       reportVoiceError: (requestId: RequestId, playbackId: string, message: string) => void
+      getVoiceState: () => Promise<VoiceStateMessage | null>
+      setVoiceEnabled: (requestId: RequestId, enabled: boolean) => void
+      setVoiceId: (requestId: RequestId, voiceId: VoiceId) => void
+      onVoiceState: (callback: (message: VoiceStateMessage) => void) => () => void
       getConfig: () => Promise<LLMSettingsView | null>
       saveConfig: (settings: LLMSettingsSave) => Promise<LLMSettingsView | null>
     }
