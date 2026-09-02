@@ -139,7 +139,7 @@ interface ChatMessage {
 }
 
 interface LLMProvider {
-  chat(messages: ChatMessage[]): Promise<AsyncIterable<string>>
+  chat(messages: ChatMessage[]): AsyncIterable<string>
 }
 
 class OpenAICompatibleProvider implements LLMProvider {
