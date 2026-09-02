@@ -15,16 +15,21 @@ function fakeProvider(handler: () => AsyncIterable<string>): LLMProvider {
 describe('ChatManager', () => {
   it('appends user and assistant messages on success', async () => {
     const conversation = new ConversationManager(10, 'sys')
-    const events: Array<{ type: string; delta?: string; message?: string }> = []
+    const events: unknown[] = []
     const provider = fakeProvider(async function* () {
       yield '你'
       yield '好'
     })
     const chat = new ChatManager(conversation, provider, (event) => events.push(event))
 
-    await chat.sendUserMessage(' 在吗 ')
+    await chat.sendUserMessage('req-1', ' 在吗 ')
 
-    expect(events.map((event) => event.type)).toEqual(['start', 'delta', 'delta', 'complete'])
+    expect(events).toEqual([
+      { type: 'start', requestId: 'req-1' },
+      { type: 'delta', requestId: 'req-1', delta: '你' },
+      { type: 'delta', requestId: 'req-1', delta: '好' },
+      { type: 'complete', requestId: 'req-1', message: '你好' }
+    ])
     expect(conversation.payload().map((message) => message.content)).toEqual([
       'sys',
       '在吗',
@@ -34,15 +39,18 @@ describe('ChatManager', () => {
 
   it('does not write an assistant message when the provider fails', async () => {
     const conversation = new ConversationManager(10, 'sys')
-    const events: string[] = []
+    const events: Array<{ type: string; requestId: string; message?: string }> = []
     const provider = fakeProvider(async function* () {
       throw new Error('relay down')
     })
-    const chat = new ChatManager(conversation, provider, (event) => events.push(event.type))
+    const chat = new ChatManager(conversation, provider, (event) => events.push(event))
 
-    await chat.sendUserMessage('hi')
+    await chat.sendUserMessage('req-1', 'hi')
 
-    expect(events).toEqual(['start', 'error'])
+    expect(events).toEqual([
+      { type: 'start', requestId: 'req-1' },
+      { type: 'error', requestId: 'req-1', message: 'relay down' }
+    ])
     expect(conversation.payload().map((message) => message.content)).toEqual(['sys', 'hi'])
   })
 
@@ -54,7 +62,7 @@ describe('ChatManager', () => {
     })
     const chat = new ChatManager(conversation, provider, (event) => events.push(event.type))
 
-    await chat.sendUserMessage('   ')
+    await chat.sendUserMessage('req-1', '   ')
 
     expect(events).toEqual([])
     expect(conversation.size).toBe(0)
@@ -66,20 +74,25 @@ describe('ChatManager', () => {
       release = resolve
     })
     const conversation = new ConversationManager(10, 'sys')
-    const events: string[] = []
+    const events: Array<{ type: string; requestId: string; delta?: string; message?: string }> = []
     const provider = fakeProvider(async function* () {
       await gate
       yield 'ok'
     })
-    const chat = new ChatManager(conversation, provider, (event) => events.push(event.type))
+    const chat = new ChatManager(conversation, provider, (event) => events.push(event))
 
-    const first = chat.sendUserMessage('first')
-    const second = chat.sendUserMessage('second')
+    const first = chat.sendUserMessage('req-1', 'first')
+    const second = chat.sendUserMessage('req-2', 'second')
     release()
     await first
     await second
 
-    expect(events).toEqual(['start', 'error', 'delta', 'complete'])
+    expect(events).toEqual([
+      { type: 'start', requestId: 'req-1' },
+      { type: 'error', requestId: 'req-2', message: '上一条消息还在回复中，请稍候' },
+      { type: 'delta', requestId: 'req-1', delta: 'ok' },
+      { type: 'complete', requestId: 'req-1', message: 'ok' }
+    ])
     expect(conversation.payload().map((message) => message.content)).toEqual([
       'sys',
       'first',

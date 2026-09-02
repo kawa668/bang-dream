@@ -80,10 +80,10 @@ const writeErrorLog = (error: unknown): void => {
 
 function broadcastChatEvent(event: ChatEvent): void {
   if (!controlWindow) return
-  if (event.type === 'start') controlWindow.webContents.send('chat:start')
-  if (event.type === 'delta') controlWindow.webContents.send('chat:delta', event.delta)
-  if (event.type === 'complete') controlWindow.webContents.send('chat:complete', event.message)
-  if (event.type === 'error') controlWindow.webContents.send('chat:error', event.message)
+  if (event.type === 'start') controlWindow.webContents.send('chat:start', event)
+  if (event.type === 'delta') controlWindow.webContents.send('chat:delta', event)
+  if (event.type === 'complete') controlWindow.webContents.send('chat:complete', event)
+  if (event.type === 'error') controlWindow.webContents.send('chat:error', event)
 }
 
 function rebuildChatManager(): void {
@@ -141,13 +141,15 @@ app.whenReady().then(async () => {
     isMenuOpen = open
   })
 
-  ipcMain.on('chat:send', (_event, text: string) => {
-    void chatManager?.sendUserMessage(text)
+  ipcMain.on('chat:send', (_event, payload: { requestId: string; text: string }) => {
+    if (!payload?.requestId) return
+    void chatManager?.sendUserMessage(payload.requestId, payload.text)
   })
 
-  ipcMain.on('chat:clear', () => {
+  ipcMain.on('chat:clear', (_event, payload: { requestId: string }) => {
+    if (!payload?.requestId) return
     chatManager?.clear()
-    controlWindow?.webContents.send('chat:clear')
+    controlWindow?.webContents.send('chat:clear', payload)
   })
 
   ipcMain.handle('config:get', () => {

@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { OutfitId } from '../shared/types'
 import type { LLMSettingsSave, LLMSettingsView } from '../shared/chat'
+import type { RequestId } from '../shared/requestId'
 
 const api = {
   onModelSwitch: (callback: (id: OutfitId) => void): (() => void) => {
@@ -39,34 +40,34 @@ const api = {
   reportMenuOpen: (open: boolean): void => {
     ipcRenderer.send('menu-state', open)
   },
-  sendChatMessage: (text: string): void => {
-    ipcRenderer.send('chat:send', text)
+  sendChatMessage: (requestId: RequestId, text: string): void => {
+    ipcRenderer.send('chat:send', { requestId, text })
   },
-  clearChat: (): void => {
-    ipcRenderer.send('chat:clear')
+  clearChat: (requestId: RequestId): void => {
+    ipcRenderer.send('chat:clear', { requestId })
   },
-  onChatStart: (callback: () => void): (() => void) => {
-    const listener = (): void => callback()
+  onChatStart: (callback: (event: { requestId: RequestId }) => void): (() => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, payload: { requestId: RequestId }): void => callback(payload)
     ipcRenderer.on('chat:start', listener)
     return () => ipcRenderer.removeListener('chat:start', listener)
   },
-  onChatDelta: (callback: (delta: string) => void): (() => void) => {
-    const listener = (_event: Electron.IpcRendererEvent, delta: string): void => callback(delta)
+  onChatDelta: (callback: (event: { requestId: RequestId; delta: string }) => void): (() => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, payload: { requestId: RequestId; delta: string }): void => callback(payload)
     ipcRenderer.on('chat:delta', listener)
     return () => ipcRenderer.removeListener('chat:delta', listener)
   },
-  onChatComplete: (callback: (message: string) => void): (() => void) => {
-    const listener = (_event: Electron.IpcRendererEvent, message: string): void => callback(message)
+  onChatComplete: (callback: (event: { requestId: RequestId; message: string }) => void): (() => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, payload: { requestId: RequestId; message: string }): void => callback(payload)
     ipcRenderer.on('chat:complete', listener)
     return () => ipcRenderer.removeListener('chat:complete', listener)
   },
-  onChatError: (callback: (message: string) => void): (() => void) => {
-    const listener = (_event: Electron.IpcRendererEvent, message: string): void => callback(message)
+  onChatError: (callback: (event: { requestId: RequestId; message: string }) => void): (() => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, payload: { requestId: RequestId; message: string }): void => callback(payload)
     ipcRenderer.on('chat:error', listener)
     return () => ipcRenderer.removeListener('chat:error', listener)
   },
-  onChatClear: (callback: () => void): (() => void) => {
-    const listener = (): void => callback()
+  onChatClear: (callback: (event: { requestId: RequestId }) => void): (() => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, payload: { requestId: RequestId }): void => callback(payload)
     ipcRenderer.on('chat:clear', listener)
     return () => ipcRenderer.removeListener('chat:clear', listener)
   },

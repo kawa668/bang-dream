@@ -2,6 +2,7 @@ import { groupActions } from '../../shared/actionCategories'
 import { groupModelsByCharacter } from '../../shared/modelCategories'
 import type { ModelDescriptor, OutfitId } from '../../shared/types'
 import type { LLMSettingsSave, LLMSettingsView } from '../../shared/chat'
+import { createRequestId } from '../../shared/requestId'
 
 const status = document.querySelector<HTMLParagraphElement>('#status')
 const modelButtons = document.querySelector<HTMLDivElement>('#model-buttons')
@@ -55,7 +56,7 @@ async function sendChatMessage(): Promise<void> {
   if (!text.trim()) return
   appendChatMessage('user', text.trim())
   chatInput.value = ''
-  window.api.sendChatMessage(text)
+  window.api.sendChatMessage(createRequestId('chat'), text)
 }
 
 async function loadConfig(): Promise<void> {
@@ -212,34 +213,34 @@ window.api.onModelSwitch((id) => {
   void renderActions(id)
 })
 
-window.api.onChatStart(() => {
+window.api.onChatStart((_event) => {
   const message = appendChatMessage('assistant', '')
   assistantContent = message.querySelector<HTMLDivElement>('.chat-content')
   if (chatStatus) chatStatus.textContent = '正在回复...'
 })
 
-window.api.onChatDelta((delta) => {
-  if (assistantContent) assistantContent.textContent += delta
+window.api.onChatDelta((event) => {
+  if (assistantContent) assistantContent.textContent += event.delta
   if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight
 })
 
-window.api.onChatComplete((message) => {
-  if (assistantContent) assistantContent.textContent = message
+window.api.onChatComplete((event) => {
+  if (assistantContent) assistantContent.textContent = event.message
   assistantContent = null
   if (chatStatus) chatStatus.textContent = ''
 })
 
-window.api.onChatError((message) => {
+window.api.onChatError((event) => {
   if (assistantContent) {
-    assistantContent.textContent += `\n[${message}]`
+    assistantContent.textContent += `\n[${event.message}]`
   } else {
-    appendChatMessage('system', message)
+    appendChatMessage('system', event.message)
   }
   assistantContent = null
   if (chatStatus) chatStatus.textContent = ''
 })
 
-window.api.onChatClear(() => {
+window.api.onChatClear((_event) => {
   clearChatMessages()
 })
 
@@ -255,7 +256,7 @@ chatInput?.addEventListener('keydown', (event) => {
 })
 
 chatClearButton?.addEventListener('click', () => {
-  window.api.clearChat()
+  window.api.clearChat(createRequestId('chat-clear'))
   clearChatMessages()
 })
 
