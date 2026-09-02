@@ -2,6 +2,13 @@ import { appendFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
 import { app, BrowserWindow, globalShortcut, ipcMain, screen } from 'electron'
+import { ChatManager } from './chat/chatManager'
+import type { ChatEvent } from './chat/chatManager'
+import { ConversationManager } from './chat/conversationManager'
+import { OpenAICompatibleProvider } from './chat/llmProvider'
+import { ConfigService } from './config'
+import { ElectronSecretStore } from './electronSecretStore'
+import type { AppConfig, LLMSettingsSave } from '../shared/chat'
 
 const SHORTCUTS: Array<[string, string]> = [
   ['F1', 'casual'],
@@ -16,6 +23,9 @@ let modelBounds: { x: number; y: number; width: number; height: number } | null 
 let isDragging = false
 let isMenuOpen = false
 let mouseInterceptEnabled = false
+let chatManager: ChatManager | null = null
+let configService: ConfigService | null = null
+let appConfig: AppConfig | null = null
 
 function createOutputWindow(): BrowserWindow {
   const { workArea } = screen.getPrimaryDisplay()
@@ -68,9 +78,40 @@ const writeErrorLog = (error: unknown): void => {
   appendFile(join(app.getPath('userData'), 'live2d-error.log'), `${new Date().toISOString()} ${error instanceof Error ? error.stack : String(error)}\n`).catch(() => {})
 }
 
-app.whenReady().then(() => {
+function broadcastChatEvent(event: ChatEvent): void {
+  if (!controlWindow) return
+  if (event.type === 'start') controlWindow.webContents.send('chat:start')
+  if (event.type === 'delta') controlWindow.webContents.send('chat:delta', event.delta)
+  if (event.type === 'complete') controlWindow.webContents.send('chat:complete', event.message)
+  if (event.type === 'error') controlWindow.webContents.send('chat:error', event.message)
+}
+
+function rebuildChatManager(): void {
+  if (!configService || !appConfig) return
+  const conversation = new ConversationManager(
+    appConfig.llm.maxHistory,
+    appConfig.llm.systemPrompt
+  )
+  const provider = new OpenAICompatibleProvider({
+    baseUrl: appConfig.llm.baseUrl,
+    apiKey: configService.getApiKey(appConfig),
+    model: appConfig.llm.model,
+    temperature: appConfig.llm.temperature,
+    timeoutMs: appConfig.llm.timeoutMs
+  })
+  chatManager = new ChatManager(conversation, provider, broadcastChatEvent)
+}
+
+app.whenReady().then(async () => {
   createOutputWindow()
   createControlWindow()
+
+  configService = new ConfigService(
+    join(app.getPath('userData'), 'config.json'),
+    new ElectronSecretStore()
+  )
+  appConfig = await configService.load()
+  rebuildChatManager()
 
   ipcMain.on('status', (_event, status: string) => {
     controlWindow?.webContents.send('app:status', status)
@@ -98,6 +139,28 @@ app.whenReady().then(() => {
 
   ipcMain.on('menu-state', (_event, open: boolean) => {
     isMenuOpen = open
+  })
+
+  ipcMain.on('chat:send', (_event, text: string) => {
+    void chatManager?.sendUserMessage(text)
+  })
+
+  ipcMain.on('chat:clear', () => {
+    chatManager?.clear()
+    controlWindow?.webContents.send('chat:clear')
+  })
+
+  ipcMain.handle('config:get', () => {
+    if (!configService || !appConfig) return null
+    return configService.toView(appConfig)
+  })
+
+  ipcMain.handle('config:save', async (_event, save: LLMSettingsSave) => {
+    if (!configService || !appConfig) return null
+    appConfig = configService.applySave(appConfig, save)
+    await configService.save(appConfig)
+    rebuildChatManager()
+    return configService.toView(appConfig)
   })
 
   setInterval(() => {
