@@ -13,6 +13,7 @@ export interface TextToSpeechProvider {
   probeReady(): Promise<boolean>
   loadVoice(profile: VoiceProfile): Promise<void>
   synthesize(profile: VoiceProfile, text: string): Promise<Uint8Array>
+  requestExit(): Promise<void>
 }
 
 export interface GptSoVITSProcess {

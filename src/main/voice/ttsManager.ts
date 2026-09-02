@@ -1,0 +1,210 @@
+import type { OutfitId } from '../../shared/types'
+import type { VoiceConfig, VoiceId, VoiceRuntimeState, VoiceStateMessage } from '../../shared/voice'
+import { isVoiceId, voiceIdForModel } from '../../shared/voice'
+import type { GptSoVITSProcess, TextToSpeechProvider, VoiceProcessLauncher, VoiceProfile } from './interfaces'
+
+export interface TTSManagerOptions {
+  voiceConfig: VoiceConfig
+  catalog: Record<VoiceId, VoiceProfile>
+  provider: TextToSpeechProvider
+  launcher: VoiceProcessLauncher
+  persist: (changes: { enabled: boolean; selectedVoice: VoiceId }) => void
+  onState: (message: VoiceStateMessage) => void
+  play: (requestId: string, audio: Uint8Array) => Promise<void>
+  pollIntervalMs?: number
+}
+
+export class TTSManager {
+  private readonly config: VoiceConfig
+  private readonly catalog: Record<VoiceId, VoiceProfile>
+  private readonly provider: TextToSpeechProvider
+  private readonly launcher: VoiceProcessLauncher
+  private readonly persist: TTSManagerOptions['persist']
+  private readonly onState: TTSManagerOptions['onState']
+  private readonly play: TTSManagerOptions['play']
+  private readonly pollIntervalMs: number
+
+  private enabled: boolean
+  private selectedVoice: VoiceId
+  private modelId: OutfitId | null = null
+  private runtimeState: VoiceRuntimeState
+  private process: GptSoVITSProcess | null = null
+  private managed = false
+  private startPromise: Promise<void> | null = null
+  private loadedVoice: VoiceId | null = null
+  private voiceLoadPromise: Promise<void> | null = null
+  private speechTail: Promise<void> = Promise.resolve()
+  private disposed = false
+
+  constructor(options: TTSManagerOptions) {
+    this.config = options.voiceConfig
+    this.catalog = options.catalog
+    this.provider = options.provider
+    this.launcher = options.launcher
+    this.persist = options.persist
+    this.onState = options.onState
+    this.play = options.play
+    this.pollIntervalMs = options.pollIntervalMs ?? 2000
+    this.enabled = options.voiceConfig.enabled
+    this.selectedVoice = options.voiceConfig.selectedVoice
+    this.runtimeState = this.enabled ? 'idle' : 'off'
+  }
+
+  stateMessage(requestId?: string): VoiceStateMessage {
+    return {
+      requestId,
+      state: {
+        enabled: this.enabled,
+        selectedVoice: this.selectedVoice,
+        modelId: this.modelId,
+        runtimeState: this.runtimeState
+      }
+    }
+  }
+
+  setModel(modelId: OutfitId): void {
+    this.modelId = modelId
+    const next = voiceIdForModel(modelId)
+    if (this.selectedVoice !== next) {
+      this.setVoice(next)
+    } else {
+      this.emitState()
+    }
+  }
+
+  setVoice(voiceId: VoiceId): void {
+    if (!isVoiceId(voiceId) || this.selectedVoice === voiceId) return
+    this.selectedVoice = voiceId
+    this.persist({ enabled: this.enabled, selectedVoice: voiceId })
+    this.setRuntimeState(this.enabled ? 'idle' : 'off')
+    if (this.process || this.startPromise) {
+      void this.ensureVoiceLoaded(voiceId)
+    }
+  }
+
+  async setEnabled(enabled: boolean): Promise<void> {
+    if (enabled === this.enabled) return
+    this.enabled = enabled
+    this.persist({ enabled, selectedVoice: this.selectedVoice })
+
+    if (enabled) {
+      try {
+        await this.ensureStarted()
+        await this.ensureVoiceLoaded(this.selectedVoice)
+        this.setRuntimeState('idle')
+      } catch (error) {
+        this.setRuntimeState('error', undefined, errorText(error))
+      }
+    } else {
+      this.setRuntimeState('stopping')
+      await this.stopService()
+      this.setRuntimeState('off')
+    }
+  }
+
+  speak(text: string, requestId: string): Promise<void> {
+    const task = this.speechTail.then(async () => {
+      if (!this.enabled || this.disposed) return
+      await this.ensureStarted()
+      await this.ensureVoiceLoaded(this.selectedVoice)
+      const profile = this.catalog[this.selectedVoice]
+      this.setRuntimeState('synthesizing', requestId)
+      const audio = await this.provider.synthesize(profile, text)
+      this.setRuntimeState('playing', requestId)
+      await this.play(requestId, audio)
+      this.setRuntimeState('idle', requestId)
+    })
+    const wrapped = task.catch((error) => {
+      if (!this.disposed) {
+        this.setRuntimeState('error', requestId, errorText(error))
+      }
+    })
+    this.speechTail = wrapped
+    return wrapped
+  }
+
+  async dispose(): Promise<void> {
+    this.disposed = true
+    await this.startPromise?.catch(() => {})
+    await this.stopService()
+  }
+
+  private async ensureStarted(): Promise<void> {
+    if (this.startPromise) return this.startPromise
+    this.setRuntimeState('starting')
+    this.startPromise = (async () => {
+      if (await this.provider.probeReady()) {
+        this.managed = false
+        return
+      }
+      const port = new URL(this.config.ttsEndpoint).port || '9880'
+      this.process = this.launcher.launch({
+        gptSovitsDir: this.config.gptSovitsDir,
+        port: Number(port)
+      })
+      this.managed = true
+      const deadline = Date.now() + this.config.startupTimeoutMs
+      while (Date.now() < deadline) {
+        await this.sleep(this.pollIntervalMs)
+        if (await this.provider.probeReady()) return
+      }
+      throw new Error('GPT-SoVITS 启动超时，请检查路径和运行环境')
+    })().catch((error) => {
+      if (this.process) {
+        this.process.kill()
+        this.process = null
+      }
+      this.managed = false
+      throw error
+    }).finally(() => {
+      this.startPromise = null
+    })
+    return this.startPromise
+  }
+
+  private ensureVoiceLoaded(voiceId: VoiceId): Promise<void> {
+    if (this.loadedVoice === voiceId) return Promise.resolve()
+    const previous = this.voiceLoadPromise ?? Promise.resolve()
+    const task = previous.then(async () => {
+      if (this.loadedVoice === voiceId) return
+      this.setRuntimeState('loading-voice')
+      await this.provider.loadVoice(this.catalog[voiceId])
+      this.loadedVoice = voiceId
+    })
+    this.voiceLoadPromise = task.catch(() => {})
+    return task
+  }
+
+  private async stopService(): Promise<void> {
+    if (this.managed && this.process) {
+      await this.provider.requestExit()
+      this.process.kill()
+    }
+    this.process = null
+    this.managed = false
+    this.loadedVoice = null
+  }
+
+  private setRuntimeState(
+    state: VoiceRuntimeState,
+    requestId?: string,
+    message?: string
+  ): void {
+    this.runtimeState = state
+    const payload = this.stateMessage(requestId)
+    if (message) payload.state.message = message
+    this.onState(payload)
+  }
+
+  private emitState(): void {
+    this.onState(this.stateMessage())
+  }
+
+  private sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms))
+  }
+}
+
+function errorText(error: unknown): string {
+  return error instanceof Error ? error.message : String(error)
+}

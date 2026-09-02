@@ -60,6 +60,14 @@ export class GPTSoVITSProvider implements TextToSpeechProvider {
     return bytes
   }
 
+  async requestExit(): Promise<void> {
+    try {
+      await this.fetchImpl(`${this.endpoint}/control?command=exit`)
+    } catch {
+      // 服务已退出时忽略连接错误
+    }
+  }
+
   private async getCommand(
     path: string,
     params: Record<string, string>
