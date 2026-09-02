@@ -103,15 +103,15 @@ function rebuildChatManager(): void {
 }
 
 app.whenReady().then(async () => {
-  createOutputWindow()
-  createControlWindow()
-
   configService = new ConfigService(
     join(app.getPath('userData'), 'config.json'),
     new ElectronSecretStore()
   )
   appConfig = await configService.load()
   rebuildChatManager()
+
+  createOutputWindow()
+  createControlWindow()
 
   ipcMain.on('status', (_event, status: string) => {
     controlWindow?.webContents.send('app:status', status)
