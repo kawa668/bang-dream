@@ -8,6 +8,7 @@ import { fetchModelManifest } from './models'
 let manualActionUntil = 0
 let contextMenuOpen = false
 let modelManifestCache: ModelDescriptor[] | null = null
+let currentVoiceUrl: string | null = null
 
 function simplifiedName(displayName: string): string {
   return displayName.replace(/^(若叶睦|千早爱音|丰川祥子)·/, '')
@@ -166,6 +167,34 @@ async function main(): Promise<void> {
     const played = renderer.playMotion(action)
     window.api.reportStatus(played ? `动作：${action}` : `当前模型没有动作：${action}`)
   })
+
+  const voiceAudio = document.querySelector<HTMLAudioElement>('#voice-audio')
+  if (voiceAudio) {
+    window.api.onVoicePlay(({ requestId, playbackId, audio }) => {
+      if (currentVoiceUrl) URL.revokeObjectURL(currentVoiceUrl)
+      const blob = new Blob([audio], { type: 'audio/wav' })
+      currentVoiceUrl = URL.createObjectURL(blob)
+      voiceAudio.src = currentVoiceUrl
+      voiceAudio.onended = () => window.api.reportVoiceEnded(requestId, playbackId)
+      voiceAudio.onerror = () => {
+        window.api.reportVoiceError(requestId, playbackId, '音频播放失败')
+      }
+      void voiceAudio.play().catch((error) => {
+        window.api.reportVoiceError(requestId, playbackId, String(error))
+      })
+    })
+
+    window.api.onVoiceStop(({ playbackId }) => {
+      voiceAudio.pause()
+      voiceAudio.currentTime = 0
+      voiceAudio.onended = null
+      voiceAudio.onerror = null
+      if (currentVoiceUrl) {
+        URL.revokeObjectURL(currentVoiceUrl)
+        currentVoiceUrl = null
+      }
+    })
+  }
 }
 
 main().catch((error) => {

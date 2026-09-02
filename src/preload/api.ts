@@ -71,6 +71,35 @@ const api = {
     ipcRenderer.on('chat:clear', listener)
     return () => ipcRenderer.removeListener('chat:clear', listener)
   },
+  onVoicePlay: (callback: (payload: {
+    requestId: RequestId
+    playbackId: string
+    audio: Uint8Array
+  }) => void): (() => void) => {
+    const listener = (
+      _event: Electron.IpcRendererEvent,
+      payload: { requestId: RequestId; playbackId: string; audio: Uint8Array }
+    ): void => callback(payload)
+    ipcRenderer.on('voice:play', listener)
+    return () => ipcRenderer.removeListener('voice:play', listener)
+  },
+  onVoiceStop: (callback: (payload: {
+    requestId: RequestId
+    playbackId: string
+  }) => void): (() => void) => {
+    const listener = (
+      _event: Electron.IpcRendererEvent,
+      payload: { requestId: RequestId; playbackId: string }
+    ): void => callback(payload)
+    ipcRenderer.on('voice:stop', listener)
+    return () => ipcRenderer.removeListener('voice:stop', listener)
+  },
+  reportVoiceEnded: (requestId: RequestId, playbackId: string): void => {
+    ipcRenderer.send('voice:playback-ended', { requestId, playbackId })
+  },
+  reportVoiceError: (requestId: RequestId, playbackId: string, message: string): void => {
+    ipcRenderer.send('voice:playback-error', { requestId, playbackId, message })
+  },
   getConfig: (): Promise<LLMSettingsView | null> => ipcRenderer.invoke('config:get'),
   saveConfig: (settings: LLMSettingsSave): Promise<LLMSettingsView | null> => (
     ipcRenderer.invoke('config:save', settings)

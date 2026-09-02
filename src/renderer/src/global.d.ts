@@ -22,6 +22,17 @@ declare global {
       onChatComplete: (callback: (event: { requestId: RequestId; message: string }) => void) => () => void
       onChatError: (callback: (event: { requestId: RequestId; message: string }) => void) => () => void
       onChatClear: (callback: (event: { requestId: RequestId }) => void) => () => void
+      onVoicePlay: (callback: (payload: {
+        requestId: RequestId
+        playbackId: string
+        audio: Uint8Array
+      }) => void) => () => void
+      onVoiceStop: (callback: (payload: {
+        requestId: RequestId
+        playbackId: string
+      }) => void) => () => void
+      reportVoiceEnded: (requestId: RequestId, playbackId: string) => void
+      reportVoiceError: (requestId: RequestId, playbackId: string, message: string) => void
       getConfig: () => Promise<LLMSettingsView | null>
       saveConfig: (settings: LLMSettingsSave) => Promise<LLMSettingsView | null>
     }
