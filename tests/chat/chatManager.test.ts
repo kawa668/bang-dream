@@ -59,4 +59,31 @@ describe('ChatManager', () => {
     expect(events).toEqual([])
     expect(conversation.size).toBe(0)
   })
+
+  it('ignores a second message while the first is still streaming', async () => {
+    let release!: () => void
+    const gate = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    const conversation = new ConversationManager(10, 'sys')
+    const events: string[] = []
+    const provider = fakeProvider(async function* () {
+      await gate
+      yield 'ok'
+    })
+    const chat = new ChatManager(conversation, provider, (event) => events.push(event.type))
+
+    const first = chat.sendUserMessage('first')
+    const second = chat.sendUserMessage('second')
+    release()
+    await first
+    await second
+
+    expect(events).toEqual(['start', 'error', 'delta', 'complete'])
+    expect(conversation.payload().map((message) => message.content)).toEqual([
+      'sys',
+      'first',
+      'ok'
+    ])
+  })
 })

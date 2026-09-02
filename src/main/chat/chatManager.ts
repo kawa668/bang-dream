@@ -8,6 +8,8 @@ export type ChatEvent =
   | { type: 'error'; message: string }
 
 export class ChatManager {
+  private busy = false
+
   constructor(
     private readonly conversation: ConversationManager,
     private readonly provider: LLMProvider,
@@ -18,11 +20,16 @@ export class ChatManager {
     const content = text.trim()
     if (!content) return
 
-    this.conversation.append({ role: 'user', content })
-    this.emit({ type: 'start' })
+    if (this.busy) {
+      this.emit({ type: 'error', message: '上一条消息还在回复中，请稍候' })
+      return
+    }
 
+    this.busy = true
     let full = ''
     try {
+      this.conversation.append({ role: 'user', content })
+      this.emit({ type: 'start' })
       for await (const delta of this.provider.chat(this.conversation.payload())) {
         full += delta
         this.emit({ type: 'delta', delta })
@@ -35,6 +42,8 @@ export class ChatManager {
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       this.emit({ type: 'error', message })
+    } finally {
+      this.busy = false
     }
   }
 
