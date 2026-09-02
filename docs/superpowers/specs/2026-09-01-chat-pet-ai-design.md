@@ -1,13 +1,14 @@
 # 聊天宠物 AI 模块设计
 
 日期：2026-09-01
-状态：设计已确认，待实施计划
+修订：2026-09-02
+状态：已按评审意见修订，待实施计划
 
 ## 背景
 
 现有项目是一个基于 Electron 的 Live2D 桌面宠物/直播应用，支持加载 26 套模型、切换角色、随机播放动作、全屏透明输出和拖动。本次目标是在现有项目基础上逐步增加 AI 聊天和语音能力，最终形成完整的桌面聊天宠物。
 
-第一阶段只做项目分析、架构设计和文字聊天的最小实现，不实现语音合成、语音识别和表现层联动。
+Phase 1 只做文字聊天最小实现：不启动 GPT-SoVITS，不创建 VoiceManager，不做语音合成、语音识别和表现层联动。
 
 ## 外部资源现状
 
@@ -59,46 +60,72 @@
 - 主进程 `index.ts` 集中了窗口、快捷键、IPC 和定时器，继续加聊天/语音会继续膨胀。
 - 没有统一配置系统，API Key、模型、系统提示词等没有落点。
 - 没有网络请求层，渲染进程也不适合直接持有 API Key。
-- 没有音频和子进程管理，GPT-SoVITS 生命周期需要新增模块。
 - 没有正式事件/消息抽象，但现有 IPC 模式可以继续沿用，不需要引入新框架。
 
 ## 推荐的新架构
 
-采用主进程统一 AI/Voice 服务层：
+Phase 1 采用主进程 AI 服务层，不引入 Voice 模块：
 
 ```text
 Electron 主进程
 ├── ConfigService             读取/保存 userData/config.json
+│                              API Key 使用 safeStorage 加密存储
 ├── ChatManager               聊天编排、消息管理、错误处理
 │   ├── LLMProvider           OpenAI-compatible 请求
-│   └── ConversationManager   会话历史、System Prompt、上下文裁剪
-├── VoiceManager              Phase 1 只做接口和生命周期骨架
-│   ├── TTS                   GPT-SoVITS 调用接口预留
-│   └── STT                   Faster-Whisper 调用接口预留
+│   └── ConversationManager   会话历史、System Prompt、上下文策略
 └── 现有窗口 / IPC / 快捷键
 
 渲染进程
 ├── 输出窗口                   Live2D 渲染保持不变
-└── 控制台                     新增聊天面板、LLM 设置、声音选择
+└── 控制台                     新增聊天面板和 LLM 设置
 ```
 
-### 数据流（Phase 1 文字聊天）
+Phase 2 及以后的语音模块按以下边界实现，不在 Phase 1 创建任何语音文件或子进程：
+
+```text
+Voice
+├── TTSManager
+│   └── GPTSoVITSProvider
+├── STTManager
+│   └── FasterWhisperProvider
+└── AudioPlayer
+```
+
+TTS 和 STT 生命周期不同，AudioPlayer 从 Phase 2 起作为独立概念存在。
+
+## 数据流
+
+### Phase 1 文字聊天
 
 ```text
 控制台输入框
   → preload IPC chat:send
   → 主进程 ChatManager
   → LLMProvider（异步 HTTP，不阻塞 UI）
-  → 流式回复逐段回 IPC
+  → chat:start / chat:delta* / chat:complete
   → 控制台聊天面板显示
 ```
 
-### 语音链路（本阶段只留接口）
+### 聊天与语音的解耦约定
 
 ```text
-AI 回复文本
-  → TTS.synthesize(text)（接口已定义，不实际调用）
-  → 后续 Phase 2 接 GPT-SoVITS / 9880
+ChatManager ──> chat:complete（只负责产生回复）
+                          │
+                          ↓
+Phase 2 的 Voice 监听该事件，决定是否播放
+```
+
+ChatManager 不直接调用 TTS，也不决定回复是否要说出来。
+
+### 语音链路（Phase 2 起，按需启动）
+
+```text
+用户开启语音回复
+  → TTSManager 检测 GPT-SoVITS
+  → 未启动则自动拉起 api_v2.py
+  → 等待 127.0.0.1:9880 就绪
+  → synthesize(text) → wav
+  → AudioPlayer 播放
 ```
 
 ## Chat 模块设计
@@ -106,6 +133,11 @@ AI 回复文本
 ### LLMProvider
 
 ```ts
+interface ChatMessage {
+  role: 'system' | 'user' | 'assistant'
+  content: string
+}
+
 interface LLMProvider {
   chat(messages: ChatMessage[]): Promise<AsyncIterable<string>>
 }
@@ -118,21 +150,29 @@ class OpenAICompatibleProvider implements LLMProvider {
 }
 ```
 
-- 只实现 OpenAI-compatible API，默认模型 `deepseek v4flash`。
+- 架构只依赖 OpenAI-compatible 接口，不绑定供应商。
+- 默认配置模型为 `deepseek v4flash`，可以通过配置随时换成任意 OpenAI-compatible 模型。
 - 兼容流式 SSE 和非流式 JSON 两种响应。
 - 所有请求在主进程异步执行。
 
 ### ConversationManager
 
 - 保存 `system`、`user`、`assistant` 消息。
-- 默认保留最近 20 条消息，超出后裁剪最旧消息。
+- 上下文裁剪作为可配置策略处理，Phase 1 默认 `maxHistory = 20`，由配置传入，不做架构硬限制。
+- 后续可扩展为按 token 数、模型上下文窗口或 Memory 内容裁剪。
 - 提供 `append()`、`clear()`、`snapshot()`。
 
 ### ChatManager
 
-- `sendUserMessage(text)`：追加用户消息、调用 LLM、流式回传、追加助手消息。
-- 错误处理：失败时回传 `chat:error`，不把坏回复写入历史。
+- `sendUserMessage(text)` 流程：
+  1. 追加用户消息。
+  2. 发 `chat:start`。
+  3. 调用 LLMProvider，逐段发 `chat:delta`。
+  4. 成功后追加助手消息并发 `chat:complete`。
+- 失败时发 `chat:error`，不把坏回复写入历史。
+- 流式中断时保留已显示部分并标记中断，历史只保存完整回复。
 - 提供清空会话能力。
+- 只负责聊天，不感知语音和 Live2D 状态。
 
 ## 配置系统
 
@@ -142,7 +182,7 @@ class OpenAICompatibleProvider implements LLMProvider {
 {
   "llm": {
     "baseUrl": "",
-    "apiKey": "",
+    "apiKeyEncrypted": "",
     "model": "deepseek v4flash",
     "systemPrompt": "你是若叶睦，说话温柔克制，用中文简短回复。",
     "temperature": 0.8,
@@ -157,12 +197,27 @@ class OpenAICompatibleProvider implements LLMProvider {
 }
 ```
 
+- `voice` 字段在 Phase 1 只作为预留配置存在，不读取、不展示、不启动任何服务。
+- API Key 使用 Electron `safeStorage.encryptString()` 加密后写入 `apiKeyEncrypted`，解密只在主进程内存中完成。
+- `safeStorage` 不可用时，API Key 只保留在当前会话内存，提示用户重新输入，不落盘明文。
 - API Key 不硬编码进源码，不提交 Git。
 - 渲染进程不保存明文 API Key，只通过 IPC 提交给主进程保存。
+- 后续角色系统扩展时，把 `systemPrompt`、`defaultVoice`、`model` 收拢到 `CharacterProfile`，Phase 1 不引入新抽象。
 
-## VoiceManager 骨架
+## 语音模块规划（Phase 2 起）
 
-Phase 1 只实现接口和生命周期，不实际调用 GPT-SoVITS 合成。
+Phase 1 不创建语音模块，不启动 GPT-SoVITS，不占用显存和内存。
+
+Phase 2 建议文件：
+
+- `src/main/voice/ttsManager.ts`
+- `src/main/voice/gptSoVITSProvider.ts`
+- `src/main/voice/sttManager.ts`
+- `src/main/voice/fasterWhisperProvider.ts`
+- `src/main/voice/audioPlayer.ts`
+- `src/main/voice/interfaces.ts`
+
+接口方向：
 
 ```ts
 interface TextToSpeech {
@@ -174,51 +229,47 @@ interface SpeechToText {
 }
 ```
 
-`VoiceManager` 职责：
-
-- 应用启动时自动拉起 GPT-SoVITS API 子进程。
-- 使用 GPT-SoVITS 自带 `runtime\python.exe` 运行 `api_v2.py -a 127.0.0.1 -p 9880`。
-- 轮询 `127.0.0.1:9880` 端口直到就绪。
-- 启动失败只更新“语音服务”状态，不影响聊天。
-- 应用退出时关闭子进程。
+启动策略采用 lazy start：用户第一次开启语音回复时才启动 GPT-SoVITS，失败只影响语音，不影响聊天。
 
 ## 控制台界面
 
-保持现有模型/动作折叠结构，新增：
+保持现有模型/动作折叠结构，Phase 1 新增：
 
 - 聊天区：消息列表、输入框、发送按钮、清空会话按钮。
 - LLM 设置折叠区：baseUrl、apiKey、model。
-- 声音选择折叠区：若叶睦 / 千早爱音 / 丰川祥子 / 墨提斯，默认若叶睦。
-- 语音服务状态：启动中 / 已就绪 / 失败。
+- 聊天状态：等待中、生成中、错误信息。
+
+声音选择和语音服务状态属于 Phase 2，不在 Phase 1 界面中出现。
 
 ## IPC 通道
 
-新增：
+Phase 1 新增：
 
 - `chat:send`：渲染进程 → 主进程，发送用户消息。
-- `chat:message`：主进程 → 渲染进程，流式或完整回复。
+- `chat:start`：主进程 → 渲染进程，回复开始。
+- `chat:delta`：主进程 → 渲染进程，流式片段。
+- `chat:complete`：主进程 → 渲染进程，完整回复结束。
 - `chat:error`：主进程 → 渲染进程，错误信息。
 - `chat:clear`：清空会话。
 - `config:get` / `config:save`：配置读取和保存。
-- `voice:status`：语音服务状态。
 
 ## 第一阶段文件清单
 
 新增：
 
-- `src/main/config.ts`
-- `src/main/chat/llmProvider.ts`
-- `src/main/chat/conversationManager.ts`
-- `src/main/chat/chatManager.ts`
-- `src/main/voice/voiceManager.ts`
-- `src/main/voice/interfaces.ts`
+- `src/shared/chat.ts`：ChatMessage 等共享类型。
+- `src/main/config.ts`：ConfigService。
+- `src/main/chat/llmProvider.ts`：OpenAICompatibleProvider。
+- `src/main/chat/conversationManager.ts`：ConversationManager。
+- `src/main/chat/chatManager.ts`：ChatManager。
 - `tests/chat/conversationManager.test.ts`
 - `tests/chat/llmProvider.test.ts`
+- `tests/chat/chatManager.test.ts`
 
 修改：
 
-- `src/main/index.ts`：挂载 ChatManager / VoiceManager。
-- `src/preload/api.ts`：新增聊天、配置、语音状态 IPC。
+- `src/main/index.ts`：挂载 ChatManager，不挂载任何语音模块。
+- `src/preload/api.ts`：新增聊天和配置 IPC。
 - `src/renderer/control.html`：聊天和设置界面。
 - `src/renderer/control.ts`：聊天逻辑。
 - `src/renderer/src/global.d.ts`：API 类型。
@@ -228,7 +279,7 @@ interface SpeechToText {
 - LLM 未配置：控制台提示，不崩溃。
 - 请求超时 / 中转站报错：聊天区显示错误，不写入历史。
 - 流式中断：保留已显示部分并标记中断，历史只保存完整回复。
-- GPT-SoVITS 启动失败：只影响语音状态。
+- safeStorage 不可用：API Key 只留在内存，提示重新输入。
 - 所有耗时任务异步执行，不阻塞 UI。
 
 ## 测试与验收
@@ -237,34 +288,37 @@ interface SpeechToText {
 
 - ConversationManager：追加、清空、超长历史裁剪。
 - LLMProvider：请求 URL/header/body、SSE 解析、超时和 HTTP 错误。
+- ChatManager：成功时 user/assistant 都写入历史；Provider 失败时 assistant 不写入历史。
 - 现有 `npm test` 和 `npm run build` 必须保持通过。
 
 手动验证：
 
-- 配置 baseUrl / apiKey / model 后发送消息能看到流式回复。
-- 重启应用后配置仍在。
-- Git 中不出现 apiKey。
-- 语音服务状态能显示启动/失败，且不阻塞聊天。
+- 配置 baseUrl / apiKey / model 后发送消息，能看到 start、delta、complete 的流式回复。
+- 重启应用后配置仍在，API Key 不以明文出现在 `config.json` 或 Git 中。
+- 未配置 LLM 时聊天区给出提示，不崩溃。
+- Phase 1 不启动任何 GPT-SoVITS 子进程。
 
 ## 第一阶段不做
 
-- 不调用 GPT-SoVITS 合成，不做 Faster-Whisper 识别。
+- 不创建 VoiceManager，不启动 GPT-SoVITS，不调用语音合成。
+- 不做 Faster-Whisper 识别。
 - 不做长期记忆、RAG、情绪系统、动作联动、多角色聊天。
 - 不做唇形同步、语音打断、Wake Word。
 
 ## 开发路线
 
 - Phase 1：文字聊天。
-- Phase 2：AI 回复 → GPT-SoVITS → 语音播放。
-- Phase 3：麦克风 → Faster-Whisper → 文字 → AI。
+- Phase 2：TTSManager + GPTSoVITSProvider + AudioPlayer，按需启动 GPT-SoVITS。
+- Phase 3：STTManager + FasterWhisperProvider，麦克风录音转文字。
 - Phase 4：完整语音对话。
-- Phase 5：人格、状态、记忆接口。
+- Phase 5：CharacterProfile、状态和记忆接口。
 - Phase 6：AI 状态与 Live2D 动作/表情联动。
 
 ## 风险
 
 - 中转站 SSE 格式差异：Provider 需兼容流式/非流式。
 - 主进程职责增长：保持模块单一职责，避免 `index.ts` 膨胀。
-- GPT-SoVITS 启动慢：异步启动，允许失败。
-- API Key 明文存 userData：后续可用 Electron safeStorage 加密。
-- 后续音频播放冲突：在 Phase 2 单独设计 AudioPlayer 队列。
+- safeStorage 依赖系统凭据：不可用时提供内存态降级，不写明文。
+- Phase 2 GPT-SoVITS 启动慢：采用 lazy start，异步等待，失败不影响聊天。
+- 后续音频播放冲突：AudioPlayer 作为独立模块，在 Phase 2 设计播放队列和打断规则。
+- 未来角色/模型绑定：通过 `CharacterProfile` 收拢 systemPrompt、voice、model，避免 Phase 1 写死架构。
