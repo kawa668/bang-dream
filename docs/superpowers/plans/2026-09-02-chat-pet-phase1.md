@@ -39,7 +39,7 @@
 - `src/preload/api.ts`：暴露聊天和配置 API。
 - `src/renderer/src/global.d.ts`：更新 Window.api 类型。
 - `src/renderer/control.html`：新增聊天区和 LLM 设置。
-- `src/renderer/control.ts`：聊天和设置逻辑。
+- `src/renderer/src/control.ts`：聊天和设置逻辑。
 
 ---
 
@@ -537,11 +537,13 @@ class FakeSecretStore implements SecretStore {
   }
 
   encrypt(plain: string): string {
-    return `enc:${plain}`
+    return `enc:${Buffer.from(plain).toString('base64')}`
   }
 
   decrypt(encrypted: string): string {
-    return encrypted.startsWith('enc:') ? encrypted.slice(4) : encrypted
+    return encrypted.startsWith('enc:')
+      ? Buffer.from(encrypted.slice(4), 'base64').toString('utf8')
+      : encrypted
   }
 }
 
@@ -570,7 +572,7 @@ describe('ConfigService', () => {
     const config = await service.load()
     const withKey = service.setApiKey(config, 'my-secret')
 
-    expect(withKey.llm.apiKeyEncrypted).toBe('enc:my-secret')
+    expect(withKey.llm.apiKeyEncrypted).toBe('enc:bXktc2VjcmV0')
     expect(service.getApiKey(withKey)).toBe('my-secret')
 
     await service.save(withKey)
@@ -1000,15 +1002,15 @@ Change the beginning of `app.whenReady().then(...)` so it is async and loads con
 
 ```ts
 app.whenReady().then(async () => {
-  createOutputWindow()
-  createControlWindow()
-
   configService = new ConfigService(
     join(app.getPath('userData'), 'config.json'),
     new ElectronSecretStore()
   )
   appConfig = await configService.load()
   rebuildChatManager()
+
+  createOutputWindow()
+  createControlWindow()
 ```
 
 Keep the rest of the existing body, then add these handlers after the existing `ipcMain.on('menu-state', ...)` block:
@@ -1128,7 +1130,7 @@ git commit -m "feat: wire chat and config IPC"
 
 **Files:**
 - Modify: `src/renderer/control.html`
-- Modify: `src/renderer/control.ts`
+- Modify: `src/renderer/src/control.ts`
 
 **Interfaces:**
 - Consumes: `window.api.sendChatMessage`、`clearChat`、`onChatStart`、`onChatDelta`、`onChatComplete`、`onChatError`、`onChatClear`、`getConfig`、`saveConfig`。
@@ -1249,7 +1251,7 @@ Add these CSS rules inside the existing `<style>`:
       }
 ```
 
-- [ ] **Step 2: Add chat state and helpers to control.ts**
+- [ ] **Step 2: Add chat state and helpers to src/renderer/src/control.ts**
 
 Keep the existing imports, then add this import:
 
@@ -1257,7 +1259,7 @@ Keep the existing imports, then add this import:
 import type { LLMSettingsSave, LLMSettingsView } from '../../shared/chat'
 ```
 
-After the existing DOM selectors at the top of `control.ts`, add:
+After the existing DOM selectors at the top of `src/renderer/src/control.ts`, add:
 
 ```ts
 const chatMessages = document.querySelector<HTMLDivElement>('#chat-messages')
@@ -1358,7 +1360,7 @@ async function saveConfig(): Promise<void> {
 
 - [ ] **Step 3: Add chat event listeners**
 
-Replace the bottom initialization block in `control.ts`:
+Replace the bottom initialization block in `src/renderer/src/control.ts`:
 
 ```ts
 window.api.onModelSwitch((id) => {
@@ -1439,7 +1441,7 @@ Expected: electron-vite build 成功。
 Run:
 
 ```bash
-git add src/renderer/control.html src/renderer/control.ts
+git add src/renderer/control.html src/renderer/src/control.ts
 git commit -m "feat: add chat UI and LLM settings to console"
 ```
 
