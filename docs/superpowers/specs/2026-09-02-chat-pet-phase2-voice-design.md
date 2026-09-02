@@ -100,7 +100,8 @@ ChatManager.emit(chat:complete { requestId, message })
 ### GPTSoVITSProvider
 
 - `ensureStarted()`：先 GET `{endpoint}/tts` 探测端口。能收到 HTTP 400/422 等结构化响应即视为已就绪；连接失败则用 `runtime\python.exe api_v2.py ...` 启动，cwd 为 GPT-SoVITS 根目录。
-- 就绪探测在实现前先用真实启动记录一次实际响应。计划内采用与当前源码一致的最小探测：`GET /tts?text_lang=auto&prompt_lang=ja`，该请求在 `check_params()` 的“缺少 `ref_audio_path`”分支返回 JSON 后停止，不会进入模型推理。就绪判据解析 JSON 的 `message` 字段并确认包含 `ref_audio_path is required`，HTTP 状态码只作为日志记录，不单独作为成功条件。
+- 就绪探测已按当前真实启动记录：`GET /tts?text_lang=auto&prompt_lang=ja` 实测返回 `HTTP 400`、`application/json`、`{"message":"ref_audio_path is required"}`，并在 `check_params()` 的“缺少 `ref_audio_path`”分支停止，不会进入模型推理；不带 `text_lang`/`prompt_lang` 的 `GET /tts` 实测返回 `HTTP 500 text/plain`，不可作就绪信号。
+- 就绪判据解析 JSON 的 `message` 字段并确认包含 `ref_audio_path is required`，HTTP 状态码只作为日志记录，不单独作为成功条件。
 - 就绪探测轮询间隔 2 秒，超时使用 `voice.startupTimeoutMs`。启动失败后终止本应用拉起的子进程并抛出错误。
 - `setVoice(profile)`：依次 GET `/set_gpt_weights`、`/set_sovits_weights`，两次都成功才更新当前音色缓存。
 - `synthesize(text, profile)`：POST `/tts`，`text_lang=auto`、`ref_audio_path`、`prompt_text`、`prompt_lang=ja`、`streaming_mode=0`，非流式返回完整 WAV 字节。
