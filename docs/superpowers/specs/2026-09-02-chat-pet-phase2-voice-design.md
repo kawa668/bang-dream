@@ -23,6 +23,12 @@ Phase 2 只做 TTS 输出。不实现 Faster-Whisper 语音识别、完整语音
 - 语音启动或合成失败只影响语音状态，不影响文字聊天和 LLM 历史。
 - 关闭“语音回复”时，若 GPT-SoVITS 是本应用启动的，则停止该子进程以释放显存；若端口上本来就是用户手动启动的服务，则不关闭外部进程。
 
+## 评审追加约束
+
+1. `chat:complete` 到 TTS 的调用必须位于 Electron 主进程编排层，不得让 `ChatManager` 直接依赖 `TTSManager`。`ChatManager` 只负责产生带 `requestId` 的聊天事件。
+2. 所有 chat/voice 相关 IPC 必须带 `requestId`：`chat:send` 由渲染进程生成并提交；`chat:start/delta/complete/error/clear` 原样回传；TTS 与后续播放任务沿用同一 `requestId`，播放层再生成 `playbackId` 以关联播放结束/失败回报。
+3. GPT-SoVITS `/tts` 就绪探测必须以当前实际 `api_v2.py` 接口行为为准。该文件对 GET `/tts` 的参数会先执行 `text_lang.lower()`、`prompt_lang.lower()`，因此探测请求必须显式提供 `text_lang` 与 `prompt_lang`；实现前先做一次真实启动记录响应，再按源码与实测结果固定探测判据，不凭假设依赖 HTTP 状态码。
+
 ## GPT-SoVITS 资源
 
 - 项目根目录：`D:\GPT-SOVITS\GPT-SoVITS-v2pro-20250604-nvidia50\GPT-SoVITS-v2pro-20250604-nvidia50`
@@ -81,9 +87,20 @@ src/main/voice/
 
 `ChatManager` 不直接调用语音。主进程收到 `chat:complete` 后作为编排层调用 `TTSManager.speak()`，保持聊天与语音解耦。
 
+主进程编排关系固定为：
+
+```text
+ChatManager.emit(chat:complete { requestId, message })
+  → 主进程 index.ts 的编排回调
+  → TTSManager.speak(message, { requestId })
+```
+
+`ChatManager.ts` 不 import、不引用、不感知 `TTSManager` 或任何 voice 模块。
+
 ### GPTSoVITSProvider
 
 - `ensureStarted()`：先 GET `{endpoint}/tts` 探测端口。能收到 HTTP 400/422 等结构化响应即视为已就绪；连接失败则用 `runtime\python.exe api_v2.py ...` 启动，cwd 为 GPT-SoVITS 根目录。
+- 就绪探测在实现前先用真实启动记录一次实际响应。计划内采用与当前源码一致的最小探测：`GET /tts?text_lang=auto&prompt_lang=ja`，该请求在 `check_params()` 的“缺少 `ref_audio_path`”分支返回 JSON 后停止，不会进入模型推理。就绪判据解析 JSON 的 `message` 字段并确认包含 `ref_audio_path is required`，HTTP 状态码只作为日志记录，不单独作为成功条件。
 - 就绪探测轮询间隔 2 秒，超时使用 `voice.startupTimeoutMs`。启动失败后终止本应用拉起的子进程并抛出错误。
 - `setVoice(profile)`：依次 GET `/set_gpt_weights`、`/set_sovits_weights`，两次都成功才更新当前音色缓存。
 - `synthesize(text, profile)`：POST `/tts`，`text_lang=auto`、`ref_audio_path`、`prompt_text`、`prompt_lang=ja`、`streaming_mode=0`，非流式返回完整 WAV 字节。
@@ -95,13 +112,14 @@ src/main/voice/
 - `setModel(modelId)`：调用共享映射函数得到目标音色；若与当前 `selectedVoice` 不同则更新并保存。
 - `setVoice(voiceId)`：手动选择音色；墨提斯同样允许。
 - `setEnabled(true)`：如果端口未就绪则懒启动；就绪后加载当前音色。`setEnabled(false)`：若 GPT-SoVITS 是本应用拉起的子进程，则调用 `/control?command=exit` 并在超时后强杀；外部服务不杀。
-- `speak(text)`：仅在 `enabled` 时运行。等待启动完成和当前音色加载完成，再调用 Provider 合成并交给 `AudioPlayer`。
+- `speak(text, requestId)`：仅在 `enabled` 时运行。等待启动完成和当前音色加载完成，再调用 Provider 合成并交给 `AudioPlayer`。合成日志、状态事件和播放任务都沿用该 `requestId`。
 - 所有语音流程异步执行并捕获错误，错误只发 `voice:state`，不向聊天区抛错。
 - 应用退出时若 GPT-SoVITS 是本应用拉起的子进程，则一并终止，避免遗留 `9880` 服务。
 
 ### AudioPlayer
 
 - 持有一个 FIFO 队列，逐条播放。
+- `enqueue(audio, requestId)` 为每条生成 `playbackId`；`voice:play`、`voice:playback-ended`、`voice:playback-error` 都携带 `requestId` 与 `playbackId`。
 - 播放依赖现有透明输出窗口：输出窗口新增隐藏 `<audio>` 元素。
 - 主进程向输出窗口发送 WAV 字节，渲染进程用 `Blob` + `URL.createObjectURL()` 播放。
 - 播放结束或失败后由输出窗口回报主进程，队列继续处理下一条。
@@ -157,13 +175,19 @@ src/main/voice/
 新增：
 
 - `voice:get`：控制台 invoke 获取状态视图。
-- `voice:set-enabled`：控制台 → 主进程，开启或关闭语音回复。
-- `voice:set-voice`：控制台 → 主进程，手动选择音色。
-- `voice:state`：主进程 → 控制台，推送状态。
-- `voice:play`：主进程 → 输出窗口，携带 WAV 字节。
-- `voice:stop`：主进程 → 输出窗口，停止当前播放并释放 Blob URL。
-- `voice:playback-ended`：输出窗口 → 主进程，播放完成。
-- `voice:playback-error`：输出窗口 → 主进程，播放失败。
+- `voice:set-enabled`：控制台 → 主进程，`{ requestId, enabled }`。
+- `voice:set-voice`：控制台 → 主进程，`{ requestId, voiceId }`。
+- `voice:state`：主进程 → 控制台，`{ requestId?, state }`；有发起操作时带对应 `requestId`。
+- `voice:play`：主进程 → 输出窗口，`{ requestId, playbackId, audio }`。
+- `voice:stop`：主进程 → 输出窗口，`{ requestId, playbackId }`。
+- `voice:playback-ended`：输出窗口 → 主进程，`{ requestId, playbackId }`。
+- `voice:playback-error`：输出窗口 → 主进程，`{ requestId, playbackId, message }`。
+
+现有 chat IPC 同步补 `requestId`：
+
+- `chat:send`：渲染进程 → 主进程，`{ requestId, text }`。
+- `chat:start` / `chat:delta` / `chat:complete` / `chat:error`：主进程 → 控制台，均带 `requestId`。
+- `chat:clear`：请求与广播事件都带 `requestId`。
 
 `src/preload/api.ts`、`src/renderer/src/global.d.ts` 同步补齐类型。
 
