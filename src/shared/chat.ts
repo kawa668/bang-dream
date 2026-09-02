@@ -1,3 +1,5 @@
+import type { VoiceId } from './voice'
+
 export type ChatRole = 'system' | 'user' | 'assistant'
 
 export interface ChatMessage {
@@ -15,15 +17,18 @@ export interface LLMConfig {
   maxHistory: number
 }
 
-export interface VoiceConfigReserved {
+export interface VoiceConfig {
+  enabled: boolean
+  selectedVoice: VoiceId
   ttsEndpoint: string
   gptSovitsDir: string
-  defaultVoice: string
+  trainingAudioDir: string
+  startupTimeoutMs: number
 }
 
 export interface AppConfig {
   llm: LLMConfig
-  voice: VoiceConfigReserved
+  voice: VoiceConfig
 }
 
 export interface LLMSettingsView {

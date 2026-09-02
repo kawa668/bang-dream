@@ -1,6 +1,8 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
 import type { AppConfig, LLMSettingsSave, LLMSettingsView } from '../shared/chat'
+import { isVoiceId } from '../shared/voice'
+import type { VoiceConfig, VoiceId } from '../shared/voice'
 
 export interface SecretStore {
   isAvailable(): boolean
@@ -19,9 +21,12 @@ export const DEFAULT_CONFIG: AppConfig = {
     maxHistory: 20
   },
   voice: {
+    enabled: false,
+    selectedVoice: '若叶睦',
     ttsEndpoint: 'http://127.0.0.1:9880',
     gptSovitsDir: 'D:\\GPT-SOVITS\\GPT-SoVITS-v2pro-20250604-nvidia50\\GPT-SoVITS-v2pro-20250604-nvidia50',
-    defaultVoice: '若叶睦'
+    trainingAudioDir: 'D:\\AGENT\\live\\训练音频',
+    startupTimeoutMs: 300000
   }
 }
 
@@ -29,10 +34,29 @@ function cloneDefaults(): AppConfig {
   return JSON.parse(JSON.stringify(DEFAULT_CONFIG)) as AppConfig
 }
 
+function normalizeVoice(
+  value?: Partial<VoiceConfig> & { defaultVoice?: unknown }
+): VoiceConfig {
+  const source = value ?? {}
+  const selected = source.selectedVoice ?? source.defaultVoice ?? DEFAULT_CONFIG.voice.selectedVoice
+  return {
+    enabled: typeof source.enabled === 'boolean'
+      ? source.enabled
+      : DEFAULT_CONFIG.voice.enabled,
+    selectedVoice: isVoiceId(selected) ? selected : DEFAULT_CONFIG.voice.selectedVoice,
+    ttsEndpoint: source.ttsEndpoint?.trim() || DEFAULT_CONFIG.voice.ttsEndpoint,
+    gptSovitsDir: source.gptSovitsDir?.trim() || DEFAULT_CONFIG.voice.gptSovitsDir,
+    trainingAudioDir: source.trainingAudioDir?.trim() || DEFAULT_CONFIG.voice.trainingAudioDir,
+    startupTimeoutMs: Number.isFinite(source.startupTimeoutMs)
+      ? source.startupTimeoutMs!
+      : DEFAULT_CONFIG.voice.startupTimeoutMs
+  }
+}
+
 function mergeDefaults(value: Partial<AppConfig> | undefined): AppConfig {
   return {
     llm: { ...cloneDefaults().llm, ...value?.llm },
-    voice: { ...cloneDefaults().voice, ...value?.voice }
+    voice: normalizeVoice(value?.voice)
   }
 }
 
@@ -102,6 +126,23 @@ export class ConfigService {
         temperature: save.temperature,
         timeoutMs: save.timeoutMs,
         maxHistory: save.maxHistory
+      }
+    }
+  }
+
+  applyVoiceConfig(
+    config: AppConfig,
+    changes: { enabled?: boolean; selectedVoice?: VoiceId }
+  ): AppConfig {
+    const selectedVoice = changes.selectedVoice ?? config.voice.selectedVoice
+    return {
+      ...config,
+      voice: {
+        ...config.voice,
+        enabled: typeof changes.enabled === 'boolean'
+          ? changes.enabled
+          : config.voice.enabled,
+        selectedVoice: isVoiceId(selectedVoice) ? selectedVoice : config.voice.selectedVoice
       }
     }
   }
