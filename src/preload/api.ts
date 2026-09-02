@@ -101,7 +101,9 @@ const api = {
   reportVoiceError: (requestId: RequestId, playbackId: string, message: string): void => {
     ipcRenderer.send('voice:playback-error', { requestId, playbackId, message })
   },
-  getVoiceState: (): Promise<VoiceStateMessage | null> => ipcRenderer.invoke('voice:get'),
+  getVoiceState: (requestId: RequestId): Promise<VoiceStateMessage | null> => (
+    ipcRenderer.invoke('voice:get', requestId)
+  ),
   setVoiceEnabled: (requestId: RequestId, enabled: boolean): void => {
     ipcRenderer.send('voice:set-enabled', { requestId, enabled })
   },

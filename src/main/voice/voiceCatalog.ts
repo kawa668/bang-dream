@@ -17,7 +17,7 @@ const VOICE_SPECS: VoiceProfileSpec[] = [
     gptFileName: 'Mujica_若葉睦_v2pp.ckpt',
     sovitsFileName: 'Mujica_若葉睦_v2pp.pth',
     referenceDir: '若叶睦',
-    referenceFile: '(A)ごめんなさい。バンド壊して、ギター下手で、ずっと謝りたかった.wav',
+    referenceFile: 'ごめんなさい。バンド壊して、ギター下手で、ずっと謝りたかった.wav',
     promptText: 'ごめんなさい。バンド壊して、ギター下手で、ずっと謝りたかった'
   },
   {

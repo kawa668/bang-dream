@@ -147,7 +147,7 @@ function applyVoiceState(message: VoiceStateMessage): void {
 
 async function loadVoiceState(): Promise<void> {
   try {
-    const message = await window.api.getVoiceState()
+    const message = await window.api.getVoiceState(createRequestId('voice-get'))
     if (message) applyVoiceState(message)
   } catch (error) {
     if (voiceStatus) {

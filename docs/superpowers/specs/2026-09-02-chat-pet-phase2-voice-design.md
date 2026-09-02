@@ -42,7 +42,7 @@ Phase 2 只做 TTS 输出。不实现 Faster-Whisper 语音识别、完整语音
 
 | 音色 | GPT 权重 | SoVITS 权重 | 参考音频 | Prompt |
 | --- | --- | --- | --- | --- |
-| 若叶睦 | `Mujica_若葉睦_v2pp.ckpt` | `Mujica_若葉睦_v2pp.pth` | `训练音频\若叶睦\(A)ごめんなさい。バンド壊して、ギター下手で、ずっと謝りたかった.wav` | ごめんなさい。バンド壊して、ギター下手で、ずっと謝りたかった |
+| 若叶睦 | `Mujica_若葉睦_v2pp.ckpt` | `Mujica_若葉睦_v2pp.pth` | `训练音频\若叶睦\ごめんなさい。バンド壊して、ギター下手で、ずっと謝りたかった.wav` | ごめんなさい。バンド壊して、ギター下手で、ずっと謝りたかった |
 | 千早爱音 | `MyGO_千早爱音_v2pp.ckpt` | `MyGO_千早爱音_v2pp.pth` | `训练音频\千早爱音\训练集\そう！今度の朝活はおしゃれなカフェで美味しいモーニングをいっぱい食べるんだ～！.mp3` | そう！今度の朝活はおしゃれなカフェで美味しいモーニングをいっぱい食べるんだ～！ |
 | 白祥 | `Mujica_豊川祥子_白_v2pp.ckpt` | `Mujica_豊川祥子_白_v2pp.pth` | `训练音频\丰川祥子（白祥）\(A)あなたと空を見上げるのは、いつも夏でしたわね.wav` | あなたと空を見上げるのは、いつも夏でしたわね |
 | 黑祥 | `Mujica_豊川祥子_黒_v2pp.ckpt` | `Mujica_豊川祥子_黒_v2pp.pth` | `训练音频\丰川祥子（黑祥）\(A)今後は発言にプロとしての自覚をお持ちになって.wav` | 今後は発言にプロとしての自覚をお持ちになって |
@@ -175,7 +175,7 @@ ChatManager.emit(chat:complete { requestId, message })
 
 新增：
 
-- `voice:get`：控制台 invoke 获取状态视图。
+- `voice:get`：控制台 invoke 获取状态视图，参数为 `requestId`。
 - `voice:set-enabled`：控制台 → 主进程，`{ requestId, enabled }`。
 - `voice:set-voice`：控制台 → 主进程，`{ requestId, voiceId }`。
 - `voice:state`：主进程 → 控制台，`{ requestId?, state }`；有发起操作时带对应 `requestId`。

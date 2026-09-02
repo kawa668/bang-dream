@@ -201,7 +201,9 @@ app.whenReady().then(async () => {
     controlWindow?.webContents.send('chat:clear', payload)
   })
 
-  ipcMain.handle('voice:get', () => voiceManager?.stateMessage() ?? null)
+  ipcMain.handle('voice:get', (_event, requestId: string) => (
+    voiceManager?.stateMessage(requestId) ?? null
+  ))
 
   ipcMain.on('voice:set-enabled', (_event, payload: {
     requestId: string

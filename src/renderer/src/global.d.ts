@@ -34,7 +34,7 @@ declare global {
       }) => void) => () => void
       reportVoiceEnded: (requestId: RequestId, playbackId: string) => void
       reportVoiceError: (requestId: RequestId, playbackId: string, message: string) => void
-      getVoiceState: () => Promise<VoiceStateMessage | null>
+      getVoiceState: (requestId: RequestId) => Promise<VoiceStateMessage | null>
       setVoiceEnabled: (requestId: RequestId, enabled: boolean) => void
       setVoiceId: (requestId: RequestId, voiceId: VoiceId) => void
       onVoiceState: (callback: (message: VoiceStateMessage) => void) => () => void
