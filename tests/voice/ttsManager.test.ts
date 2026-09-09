@@ -74,7 +74,11 @@ class FakeProcess {
 
 function createManager(provider: FakeProvider, launcher: FakeLauncher, config = voiceConfig) {
   const states: VoiceStateMessage[] = []
-  const persisted: Array<{ enabled: boolean; selectedVoice: string }> = []
+  const persisted: Array<{
+    enabled?: boolean
+    selectedVoice?: string
+    voiceConversationEnabled?: boolean
+  }> = []
   const played: string[] = []
   const manager = new TTSManager({
     voiceConfig: config,
@@ -158,5 +162,17 @@ describe('TTSManager', () => {
     const last = states.at(-1)
     expect(last?.state.runtimeState).toBe('error')
     expect(last?.state.message).toContain('tts down')
+  })
+
+  it('exposes and persists voiceConversationEnabled', async () => {
+    const provider = new FakeProvider()
+    const launcher = new FakeLauncher()
+    const { manager, persisted } = createManager(provider, launcher)
+
+    expect(manager.stateMessage().state.voiceConversationEnabled).toBe(false)
+    manager.setVoiceConversation(true, 'req-dialog')
+
+    expect(manager.stateMessage().state.voiceConversationEnabled).toBe(true)
+    expect(persisted.at(-1)).toMatchObject({ voiceConversationEnabled: true })
   })
 })

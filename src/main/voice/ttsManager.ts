@@ -9,7 +9,11 @@ export interface TTSManagerOptions {
   catalog: Record<VoiceId, VoiceProfile>
   provider: TextToSpeechProvider
   launcher: VoiceProcessLauncher
-  persist: (changes: { enabled: boolean; selectedVoice: VoiceId }) => void
+  persist: (changes: {
+    enabled?: boolean
+    selectedVoice?: VoiceId
+    voiceConversationEnabled?: boolean
+  }) => void
   onState: (message: VoiceStateMessage) => void
   play: (requestId: string, audio: Uint8Array) => Promise<void>
   pollIntervalMs?: number
@@ -27,6 +31,7 @@ export class TTSManager {
 
   private enabled: boolean
   private selectedVoice: VoiceId
+  private voiceConversationEnabled: boolean
   private modelId: OutfitId | null = null
   private runtimeState: VoiceRuntimeState
   private process: GptSoVITSProcess | null = null
@@ -48,6 +53,7 @@ export class TTSManager {
     this.pollIntervalMs = options.pollIntervalMs ?? 2000
     this.enabled = options.voiceConfig.enabled
     this.selectedVoice = options.voiceConfig.selectedVoice
+    this.voiceConversationEnabled = options.voiceConfig.voiceConversationEnabled
     this.runtimeState = this.enabled ? 'idle' : 'off'
   }
 
@@ -58,9 +64,21 @@ export class TTSManager {
         enabled: this.enabled,
         selectedVoice: this.selectedVoice,
         modelId: this.modelId,
-        runtimeState: this.runtimeState
+        runtimeState: this.runtimeState,
+        voiceConversationEnabled: this.voiceConversationEnabled
       }
     }
+  }
+
+  setVoiceConversation(enabled: boolean, requestId?: string): void {
+    if (this.voiceConversationEnabled === enabled) return
+    this.voiceConversationEnabled = enabled
+    this.persist({
+      enabled: this.enabled,
+      selectedVoice: this.selectedVoice,
+      voiceConversationEnabled: enabled
+    })
+    this.emitState()
   }
 
   setModel(modelId: OutfitId): void {
