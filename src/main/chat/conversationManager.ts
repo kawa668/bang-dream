@@ -26,6 +26,10 @@ export class ConversationManager {
     this.messages = []
   }
 
+  restore(messages: ChatMessage[]): void {
+    this.messages = messages.slice(-this.maxHistory)
+  }
+
   get size(): number {
     return this.messages.length
   }

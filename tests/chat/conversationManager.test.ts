@@ -44,4 +44,21 @@ describe('ConversationManager', () => {
     expect(manager.size).toBe(2)
     expect(manager.payload().map((message) => message.content)).toEqual(['sys', 'a1', 'm2'])
   })
+
+  it('restores history capped by maxHistory', () => {
+    const manager = new ConversationManager(2, 'sys')
+    manager.restore([
+      { role: 'user', content: 'a' },
+      { role: 'assistant', content: 'b' },
+      { role: 'user', content: 'c' },
+      { role: 'assistant', content: 'd' }
+    ])
+
+    expect(manager.size).toBe(2)
+    expect(manager.payload()).toEqual([
+      { role: 'system', content: 'sys' },
+      { role: 'user', content: 'c' },
+      { role: 'assistant', content: 'd' }
+    ])
+  })
 })
