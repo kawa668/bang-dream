@@ -46,6 +46,8 @@ describe('ConfigService', () => {
     expect(config.voice.sttPrecision).toBe('auto')
     expect(config.voice.sttTimeoutMs).toBe(600000)
     expect(config.voice.voiceConversationEnabled).toBe(false)
+    expect(config.currentCharacter).toBe('mutsumi')
+    expect(config.characters['anon']).toBeDefined()
   })
 
   it('migrates legacy defaultVoice to selectedVoice', async () => {
@@ -115,5 +117,27 @@ describe('ConfigService', () => {
     expect(view.hasApiKey).toBe(true)
     expect(JSON.stringify(view)).not.toContain('hidden-key')
     expect(view).not.toHaveProperty('apiKey')
+  })
+
+  it('applies system prompt/model to the current character override', async () => {
+    const service = new ConfigService(join(dir, 'config.json'), new FakeSecretStore())
+    let config: AppConfig = await service.load()
+
+    const save: LLMSettingsSave = {
+      baseUrl: 'https://relay.example.com/v1',
+      apiKey: '',
+      model: 'gpt-4o',
+      systemPrompt: '你是千早爱音',
+      temperature: 0.7,
+      timeoutMs: 10000,
+      maxHistory: 10
+    }
+    config = service.applySave(config, save)
+
+    expect(config.characters['mutsumi']).toMatchObject({
+      systemPrompt: '你是千早爱音',
+      model: 'gpt-4o'
+    })
+    expect(service.toView(config).model).toBe('gpt-4o')
   })
 })

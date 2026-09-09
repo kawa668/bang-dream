@@ -3,6 +3,8 @@ import { dirname } from 'node:path'
 import type { AppConfig, LLMSettingsSave, LLMSettingsView, VoiceConfig } from '../shared/chat'
 import { isVoiceId } from '../shared/voice'
 import type { VoiceId } from '../shared/voice'
+import { CHARACTER_PROFILES } from '../shared/characterProfiles'
+import type { CharacterId } from '../shared/characterProfiles'
 
 export interface SecretStore {
   isAvailable(): boolean
@@ -32,11 +34,15 @@ export const DEFAULT_CONFIG: AppConfig = {
     trainingAudioDir: 'D:\\AGENT\\live\\训练音频',
     startupTimeoutMs: 300000,
     voiceConversationEnabled: false
-  }
+  },
+  currentCharacter: 'mutsumi',
+  characters: {}
 }
 
 function cloneDefaults(): AppConfig {
-  return JSON.parse(JSON.stringify(DEFAULT_CONFIG)) as AppConfig
+  const base = JSON.parse(JSON.stringify(DEFAULT_CONFIG)) as AppConfig
+  base.characters = normalizeCharacters(base.characters)
+  return base
 }
 
 function normalizeVoice(
@@ -67,10 +73,24 @@ function normalizeVoice(
   }
 }
 
+function normalizeCharacters(
+  value?: Partial<Record<CharacterId, { systemPrompt?: string; model?: string }>>
+): Record<CharacterId, { systemPrompt?: string; model?: string }> {
+  return {
+    mutsumi: value?.mutsumi ?? {},
+    anon: value?.anon ?? {},
+    sakiko: value?.sakiko ?? {}
+  }
+}
+
 function mergeDefaults(value: Partial<AppConfig> | undefined): AppConfig {
   return {
     llm: { ...cloneDefaults().llm, ...value?.llm },
-    voice: normalizeVoice(value?.voice)
+    voice: normalizeVoice(value?.voice),
+    currentCharacter: isCharacterId(value?.currentCharacter)
+      ? value.currentCharacter
+      : DEFAULT_CONFIG.currentCharacter,
+    characters: normalizeCharacters(value?.characters)
   }
 }
 
@@ -117,10 +137,11 @@ export class ConfigService {
   }
 
   toView(config: AppConfig): LLMSettingsView {
+    const profile = this.effectiveProfile(config, config.currentCharacter)
     return {
       baseUrl: config.llm.baseUrl,
-      model: config.llm.model,
-      systemPrompt: config.llm.systemPrompt,
+      model: profile.model,
+      systemPrompt: profile.systemPrompt,
       temperature: config.llm.temperature,
       timeoutMs: config.llm.timeoutMs,
       maxHistory: config.llm.maxHistory,
@@ -130,17 +151,53 @@ export class ConfigService {
 
   applySave(config: AppConfig, save: LLMSettingsSave): AppConfig {
     const withKey = this.setApiKey(config, save.apiKey)
+    const role = config.currentCharacter
+    const profile = CHARACTER_PROFILES[role]
+    const systemPrompt = save.systemPrompt.trim() || profile.systemPrompt
+    const model = save.model.trim() || profile.model
     return {
       ...withKey,
+      currentCharacter: role,
+      characters: {
+        ...config.characters,
+        [role]: { systemPrompt, model }
+      },
       llm: {
         ...withKey.llm,
         baseUrl: save.baseUrl.trim(),
-        model: save.model.trim() || cloneDefaults().llm.model,
-        systemPrompt: save.systemPrompt.trim() || cloneDefaults().llm.systemPrompt,
+        model,
+        systemPrompt,
         temperature: save.temperature,
         timeoutMs: save.timeoutMs,
         maxHistory: save.maxHistory
       }
+    }
+  }
+
+  effectiveProfile(
+    config: AppConfig,
+    role: CharacterId
+  ): { systemPrompt: string; model: string } {
+    const profile = CHARACTER_PROFILES[role]
+    const override = config.characters[role]
+    return {
+      systemPrompt: override?.systemPrompt?.trim() || profile.systemPrompt,
+      model: override?.model?.trim() || profile.model
+    }
+  }
+
+  applyCharacterDefaults(
+    config: AppConfig,
+    role: CharacterId,
+    profile: { systemPrompt: string; model: string }
+  ): AppConfig {
+    const override = config.characters[role]
+    const systemPrompt = override?.systemPrompt?.trim() || profile.systemPrompt
+    const model = override?.model?.trim() || profile.model
+    return {
+      ...config,
+      currentCharacter: role,
+      llm: { ...config.llm, systemPrompt, model }
     }
   }
 
@@ -167,4 +224,8 @@ export class ConfigService {
       }
     }
   }
+}
+
+function isCharacterId(value: unknown): value is CharacterId {
+  return typeof value === 'string' && value in CHARACTER_PROFILES
 }

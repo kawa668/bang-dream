@@ -1,4 +1,5 @@
 import type { VoiceId } from './voice'
+import type { CharacterId } from './characterProfiles'
 
 export type ChatRole = 'system' | 'user' | 'assistant'
 
@@ -34,6 +35,8 @@ export interface VoiceConfig {
 export interface AppConfig {
   llm: LLMConfig
   voice: VoiceConfig
+  currentCharacter: CharacterId
+  characters: Record<CharacterId, { systemPrompt?: string; model?: string }>
 }
 
 export interface LLMSettingsView {
