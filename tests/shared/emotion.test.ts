@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { detectEmotion } from '../../src/shared/emotion'
+import { detectEmotion, pickExpressionAction } from '../../src/shared/emotion'
 
 describe('detectEmotion', () => {
   it('detects happy and sad keywords', () => {
@@ -14,5 +14,16 @@ describe('detectEmotion', () => {
 
   it('defaults to neutral', () => {
     expect(detectEmotion('今天天气不错')).toBe('neutral')
+  })
+
+  it('picks a matching expression action by emotion', () => {
+    expect(pickExpressionAction(['smile01', 'sad01'], 'happy')).toBe('smile01')
+    expect(pickExpressionAction(['angry01', 'cry02'], 'sad')).toBe('cry02')
+    expect(pickExpressionAction(['thinking01'], 'thinking')).toBe('thinking01')
+  })
+
+  it('returns null for neutral or no match', () => {
+    expect(pickExpressionAction(['smile01'], 'neutral')).toBeNull()
+    expect(pickExpressionAction(['kime01'], 'excited')).toBeNull()
   })
 })
