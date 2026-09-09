@@ -5,6 +5,8 @@ import type { LLMSettingsSave, LLMSettingsView } from '../../shared/chat'
 import { createRequestId } from '../../shared/requestId'
 import { VOICE_OPTIONS } from '../../shared/voice'
 import type { VoiceStateMessage } from '../../shared/voice'
+import { iconForCharacter, iconForModel } from '../../shared/characterIcons'
+import { createCollapseToggle } from './dom'
 
 const status = document.querySelector<HTMLParagraphElement>('#status')
 const modelButtons = document.querySelector<HTMLDivElement>('#model-buttons')
@@ -29,6 +31,11 @@ const voiceStatus = document.querySelector<HTMLParagraphElement>('#voice-status'
 
 let assistantContent: HTMLDivElement | null = null
 
+const USER_AVATAR_SVG =
+  '<svg viewBox="0 0 24 24" width="14" height="14" role="presentation">' +
+  '<circle cx="12" cy="8" r="4" fill="currentColor"/>' +
+  '<path d="M4 21c0-4 4-6.5 8-6.5s8 2.5 8 6.5" fill="currentColor"/></svg>'
+
 const VOICE_STATE_LABELS: Record<string, string> = {
   off: '语音回复已关闭',
   idle: '语音服务空闲',
@@ -48,22 +55,63 @@ let currentModel: OutfitId = 'casual'
 function appendChatMessage(role: 'user' | 'assistant' | 'system', text: string): HTMLDivElement {
   const message = document.createElement('div')
   message.className = `chat-message chat-${role}`
+
+  if (role === 'assistant') {
+    const avatar = document.createElement('img')
+    avatar.className = 'chat-avatar chat-avatar--assistant'
+    avatar.src = iconForModel(currentModel)
+    avatar.alt = ''
+    avatar.setAttribute('aria-hidden', 'true')
+    message.appendChild(avatar)
+  } else if (role === 'user') {
+    const avatar = document.createElement('span')
+    avatar.className = 'chat-avatar chat-avatar--user'
+    avatar.setAttribute('aria-hidden', 'true')
+    avatar.innerHTML = USER_AVATAR_SVG
+    message.appendChild(avatar)
+  }
+
+  const body = document.createElement('div')
+  body.className = 'chat-body'
   const author = document.createElement('span')
   author.className = 'chat-author'
   author.textContent = role === 'user' ? '你' : role === 'assistant' ? '宠物' : '系统'
   const content = document.createElement('div')
   content.className = 'chat-content'
   content.textContent = text
-  message.appendChild(author)
-  message.appendChild(content)
+  body.appendChild(author)
+  body.appendChild(content)
+  message.appendChild(body)
   chatMessages?.appendChild(message)
   if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight
+  updateChatEmptyState()
   return message
+}
+
+function updateAssistantAvatars(): void {
+  const src = iconForModel(currentModel)
+  for (const avatar of chatMessages?.querySelectorAll<HTMLImageElement>('.chat-avatar--assistant') ?? []) {
+    avatar.src = src
+  }
 }
 
 function clearChatMessages(): void {
   if (chatMessages) chatMessages.innerHTML = ''
   assistantContent = null
+  updateChatEmptyState()
+}
+
+function updateChatEmptyState(): void {
+  if (!chatMessages) return
+  const existingEmpty = chatMessages.querySelector('.chat-empty')
+  if (chatMessages.childElementCount === 0 && !existingEmpty) {
+    const empty = document.createElement('div')
+    empty.className = 'chat-empty'
+    empty.textContent = '和宠物说点什么吧'
+    chatMessages.appendChild(empty)
+  } else if (chatMessages.childElementCount > 0 && existingEmpty) {
+    existingEmpty.remove()
+  }
 }
 
 async function sendChatMessage(): Promise<void> {
@@ -156,18 +204,6 @@ async function loadVoiceState(): Promise<void> {
   }
 }
 
-function createCollapseToggle(title: string, count: number, content: HTMLElement): HTMLButtonElement {
-  const toggle = document.createElement('button')
-  toggle.className = 'collapse-toggle'
-  const update = (open: boolean): void => {
-    content.hidden = !open
-    toggle.textContent = `${open ? '▾' : '▸'} ${title} (${count})`
-  }
-  update(false)
-  toggle.addEventListener('click', () => update(content.hidden))
-  return toggle
-}
-
 async function ensureManifest(): Promise<void> {
   if (manifestByModel.size > 0) return
   const manifestResponse = await fetch('./models/manifest.json')
@@ -179,15 +215,19 @@ async function renderModelButtons(): Promise<void> {
   await ensureManifest()
   if (!modelButtons) return
   modelButtons.innerHTML = ''
-  const personTitle = document.createElement('h2')
-  personTitle.textContent = '人物'
-  modelButtons.appendChild(personTitle)
 
   for (const characterGroup of groupModelsByCharacter([...manifestByModel.values()])) {
     const characterContent = document.createElement('div')
     characterContent.className = 'character-models'
     const modelCount = characterGroup.categories.reduce((sum, group) => sum + group.models.length, 0)
-    modelButtons.appendChild(createCollapseToggle(characterGroup.character, modelCount, characterContent))
+    modelButtons.appendChild(
+      createCollapseToggle(
+        characterGroup.character,
+        modelCount,
+        characterContent,
+        iconForCharacter(characterGroup.character)
+      )
+    )
     modelButtons.appendChild(characterContent)
 
     for (const category of characterGroup.categories) {
@@ -230,6 +270,7 @@ async function loadActions(id: OutfitId): Promise<string[]> {
 async function renderActions(id: OutfitId): Promise<void> {
   const sequence = ++renderSequence
   currentModel = id
+  updateAssistantAvatars()
   const actions = await loadActions(id)
   if (sequence !== renderSequence || !actionGroups) return
 
@@ -238,9 +279,6 @@ async function renderActions(id: OutfitId): Promise<void> {
   }
 
   actionGroups.innerHTML = ''
-  const actionTitle = document.createElement('h2')
-  actionTitle.textContent = '动作'
-  actionGroups.appendChild(actionTitle)
 
   for (const group of groupActions(actions)) {
     const list = document.createElement('div')
@@ -333,6 +371,7 @@ window.api.onVoiceState((message) => {
 void loadConfig()
 void loadVoiceState()
 renderVoiceOptions()
+updateChatEmptyState()
 void renderActions('casual')
 void renderModelButtons()
 

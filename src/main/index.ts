@@ -1,4 +1,5 @@
 import { appendFile } from 'node:fs/promises'
+import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 
 import { app, BrowserWindow, globalShortcut, ipcMain, screen } from 'electron'
@@ -40,8 +41,18 @@ let audioSink: ElectronAudioSink | null = null
 let currentModelId: string | null = null
 let quitting = false
 
+function resolveAppIcon(): string | undefined {
+  const name = process.platform === 'win32' ? 'icon.ico' : 'icon.png'
+  const candidates = [
+    join(app.getAppPath(), 'resources', name),
+    join(__dirname, '../../resources', name)
+  ]
+  return candidates.find((candidate) => existsSync(candidate))
+}
+
 function createOutputWindow(): BrowserWindow {
   const { workArea } = screen.getPrimaryDisplay()
+  const icon = resolveAppIcon()
   outputWindow = new BrowserWindow({
     x: workArea.x,
     y: workArea.y,
@@ -53,6 +64,7 @@ function createOutputWindow(): BrowserWindow {
     hasShadow: false,
     resizable: false,
     alwaysOnTop: true,
+    ...(icon ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,
@@ -69,10 +81,15 @@ function createOutputWindow(): BrowserWindow {
 }
 
 function createControlWindow(): BrowserWindow {
+  const icon = resolveAppIcon()
   controlWindow = new BrowserWindow({
-    width: 320,
-    height: 420,
+    width: 460,
+    height: 680,
+    minWidth: 380,
+    minHeight: 540,
+    backgroundColor: '#f6f5f1',
     title: '控制台',
+    ...(icon ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,

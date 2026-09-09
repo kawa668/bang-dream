@@ -1,9 +1,11 @@
 import { groupActions } from '../../shared/actionCategories'
 import { groupModelsByCharacter } from '../../shared/modelCategories'
 import type { ModelDescriptor, OutfitId } from '../../shared/types'
+import { iconForCharacter } from '../../shared/characterIcons'
 import { Live2DRenderer } from './live2d'
 import { ModelManager } from './modelManager'
 import { fetchModelManifest } from './models'
+import { createCollapseToggle } from './dom'
 
 let manualActionUntil = 0
 let contextMenuOpen = false
@@ -17,18 +19,6 @@ function simplifiedName(displayName: string): string {
 async function getModelManifest(): Promise<ModelDescriptor[]> {
   if (!modelManifestCache) modelManifestCache = await fetchModelManifest()
   return modelManifestCache
-}
-
-function createContextToggle(title: string, count: number, content: HTMLElement): HTMLButtonElement {
-  const toggle = document.createElement('button')
-  toggle.className = 'collapse-toggle'
-  const update = (open: boolean): void => {
-    content.hidden = !open
-    toggle.textContent = `${open ? '▾' : '▸'} ${title} (${count})`
-  }
-  update(false)
-  toggle.addEventListener('click', () => update(content.hidden))
-  return toggle
 }
 
 function closeContextMenu(menu: HTMLDivElement): void {
@@ -53,13 +43,20 @@ async function showContextMenu(clientX: number, clientY: number, renderer: Live2
     const characterContent = document.createElement('div')
     characterContent.className = 'menu-group'
     const modelCount = characterGroup.categories.reduce((sum, group) => sum + group.models.length, 0)
-    menu.appendChild(createContextToggle(characterGroup.character, modelCount, characterContent))
+    menu.appendChild(
+      createCollapseToggle(
+        characterGroup.character,
+        modelCount,
+        characterContent,
+        iconForCharacter(characterGroup.character)
+      )
+    )
     menu.appendChild(characterContent)
 
     for (const category of characterGroup.categories) {
       const group = document.createElement('div')
       group.className = 'menu-group'
-      characterContent.appendChild(createContextToggle(category.title, category.models.length, group))
+      characterContent.appendChild(createCollapseToggle(category.title, category.models.length, group))
       characterContent.appendChild(group)
 
       for (const model of category.models) {
@@ -83,7 +80,7 @@ async function showContextMenu(clientX: number, clientY: number, renderer: Live2
   for (const group of groupActions(actions)) {
     const groupElement = document.createElement('div')
     groupElement.className = 'menu-group'
-    actionSection.appendChild(createContextToggle(group.title, group.actions.length, groupElement))
+    actionSection.appendChild(createCollapseToggle(group.title, group.actions.length, groupElement))
     actionSection.appendChild(groupElement)
     for (const action of group.actions) {
       const button = document.createElement('button')

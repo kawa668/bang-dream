@@ -21,7 +21,7 @@ function getModelCategory(id: string): string {
   return '其他'
 }
 
-function getCharacter(id: string): string {
+export function getCharacter(id: string): string {
   if (id.startsWith('341_')) return '丰川祥子'
   return id.startsWith('037_') ? '千早爱音' : '若叶睦'
 }
