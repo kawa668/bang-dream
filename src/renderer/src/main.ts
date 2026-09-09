@@ -169,7 +169,11 @@ async function main(): Promise<void> {
   if (voiceAudio) {
     window.api.onVoicePlay(({ requestId, playbackId, audio }) => {
       if (currentVoiceUrl) URL.revokeObjectURL(currentVoiceUrl)
-      const blob = new Blob([audio], { type: 'audio/wav' })
+      const arrayBuffer = audio.buffer.slice(
+        audio.byteOffset,
+        audio.byteOffset + audio.byteLength
+      ) as ArrayBuffer
+      const blob = new Blob([arrayBuffer], { type: 'audio/wav' })
       currentVoiceUrl = URL.createObjectURL(blob)
       voiceAudio.src = currentVoiceUrl
       voiceAudio.onended = () => window.api.reportVoiceEnded(requestId, playbackId)

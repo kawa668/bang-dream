@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { TTSManager } from '../../src/main/voice/ttsManager'
 import { buildVoiceCatalog } from '../../src/main/voice/voiceCatalog'
 import type { GptSoVITSProcess, TextToSpeechProvider, VoiceProcessLauncher, VoiceProfile } from '../../src/main/voice/interfaces'
-import type { VoiceConfig, VoiceStateMessage } from '../../src/shared/voice'
+import type { VoiceConfig } from '../../src/shared/chat'
+import type { VoiceStateMessage } from '../../src/shared/voice'
 
 const voiceConfig: VoiceConfig = {
   enabled: false,

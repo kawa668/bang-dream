@@ -1,5 +1,6 @@
 import type { OutfitId } from '../../shared/types'
-import type { VoiceConfig, VoiceId, VoiceRuntimeState, VoiceStateMessage } from '../../shared/voice'
+import type { VoiceConfig } from '../../shared/chat'
+import type { VoiceId, VoiceRuntimeState, VoiceStateMessage } from '../../shared/voice'
 import { isVoiceId, voiceIdForModel } from '../../shared/voice'
 import type { GptSoVITSProcess, TextToSpeechProvider, VoiceProcessLauncher, VoiceProfile } from './interfaces'
 

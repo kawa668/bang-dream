@@ -27,7 +27,11 @@ export class FasterWhisperProvider implements SpeechToTextProvider {
 
   async transcribe(audio: Uint8Array, language = 'auto'): Promise<string> {
     const form = new FormData()
-    form.append('file', new Blob([audio], { type: 'audio/webm' }), 'audio.webm')
+    const arrayBuffer = audio.buffer.slice(
+      audio.byteOffset,
+      audio.byteOffset + audio.byteLength
+    ) as ArrayBuffer
+    form.append('file', new Blob([arrayBuffer], { type: 'audio/webm' }), 'audio.webm')
     form.append('language', language)
     const response = await this.fetchImpl(`${this.endpoint}/transcribe`, {
       method: 'POST',

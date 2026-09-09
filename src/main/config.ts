@@ -1,8 +1,8 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
-import type { AppConfig, LLMSettingsSave, LLMSettingsView } from '../shared/chat'
+import type { AppConfig, LLMSettingsSave, LLMSettingsView, VoiceConfig } from '../shared/chat'
 import { isVoiceId } from '../shared/voice'
-import type { VoiceConfig, VoiceId } from '../shared/voice'
+import type { VoiceId } from '../shared/voice'
 
 export interface SecretStore {
   isAvailable(): boolean
