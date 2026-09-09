@@ -37,6 +37,7 @@ export interface VoiceStateView {
   selectedVoice: VoiceId
   modelId: string | null
   runtimeState: VoiceRuntimeState
+  voiceConversationEnabled: boolean
   message?: string
 }
 

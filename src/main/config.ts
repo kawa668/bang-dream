@@ -30,7 +30,8 @@ export const DEFAULT_CONFIG: AppConfig = {
     sttTimeoutMs: 600000,
     gptSovitsDir: 'D:\\GPT-SOVITS\\GPT-SoVITS-v2pro-20250604-nvidia50\\GPT-SoVITS-v2pro-20250604-nvidia50',
     trainingAudioDir: 'D:\\AGENT\\live\\训练音频',
-    startupTimeoutMs: 300000
+    startupTimeoutMs: 300000,
+    voiceConversationEnabled: false
   }
 }
 
@@ -59,7 +60,10 @@ function normalizeVoice(
     trainingAudioDir: source.trainingAudioDir?.trim() || DEFAULT_CONFIG.voice.trainingAudioDir,
     startupTimeoutMs: Number.isFinite(source.startupTimeoutMs)
       ? source.startupTimeoutMs!
-      : DEFAULT_CONFIG.voice.startupTimeoutMs
+      : DEFAULT_CONFIG.voice.startupTimeoutMs,
+    voiceConversationEnabled: typeof source.voiceConversationEnabled === 'boolean'
+      ? source.voiceConversationEnabled
+      : DEFAULT_CONFIG.voice.voiceConversationEnabled
   }
 }
 
@@ -142,7 +146,11 @@ export class ConfigService {
 
   applyVoiceConfig(
     config: AppConfig,
-    changes: { enabled?: boolean; selectedVoice?: VoiceId }
+    changes: {
+      enabled?: boolean
+      selectedVoice?: VoiceId
+      voiceConversationEnabled?: boolean
+    }
   ): AppConfig {
     const selectedVoice = changes.selectedVoice ?? config.voice.selectedVoice
     return {
@@ -152,7 +160,10 @@ export class ConfigService {
         enabled: typeof changes.enabled === 'boolean'
           ? changes.enabled
           : config.voice.enabled,
-        selectedVoice: isVoiceId(selectedVoice) ? selectedVoice : config.voice.selectedVoice
+        selectedVoice: isVoiceId(selectedVoice) ? selectedVoice : config.voice.selectedVoice,
+        voiceConversationEnabled: typeof changes.voiceConversationEnabled === 'boolean'
+          ? changes.voiceConversationEnabled
+          : config.voice.voiceConversationEnabled
       }
     }
   }

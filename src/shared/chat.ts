@@ -28,6 +28,7 @@ export interface VoiceConfig {
   gptSovitsDir: string
   trainingAudioDir: string
   startupTimeoutMs: number
+  voiceConversationEnabled: boolean
 }
 
 export interface AppConfig {

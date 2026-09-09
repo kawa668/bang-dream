@@ -45,6 +45,7 @@ describe('ConfigService', () => {
     expect(config.voice.whisperModel).toBe('large-v3-turbo')
     expect(config.voice.sttPrecision).toBe('auto')
     expect(config.voice.sttTimeoutMs).toBe(600000)
+    expect(config.voice.voiceConversationEnabled).toBe(false)
   })
 
   it('migrates legacy defaultVoice to selectedVoice', async () => {

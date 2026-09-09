@@ -15,7 +15,8 @@ const voiceConfig: VoiceConfig = {
   sttTimeoutMs: 600000,
   gptSovitsDir: 'D:/gpt',
   trainingAudioDir: 'D:/audio',
-  startupTimeoutMs: 2000
+  startupTimeoutMs: 2000,
+  voiceConversationEnabled: false
 }
 
 const catalog = buildVoiceCatalog({
