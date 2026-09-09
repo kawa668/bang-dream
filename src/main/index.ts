@@ -129,6 +129,7 @@ function handleChatEvent(event: ChatEvent): void {
   if (event.type === 'complete') {
     currentEmotion = detectEmotion(event.message)
     controlWindow?.webContents.send('chat:complete', { ...event, emotion: currentEmotion })
+    outputWindow?.webContents.send('ai:expression', { emotion: currentEmotion })
     void memoryStore?.append({ role: 'assistant', content: event.message, createdAt: Date.now() })
     void voiceManager?.speak(event.message, event.requestId)
   } else {

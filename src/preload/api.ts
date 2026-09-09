@@ -140,6 +140,14 @@ const api = {
     const listener = (_event: Electron.IpcRendererEvent, message: SttStateMessage): void => callback(message)
     ipcRenderer.on('stt:state', listener)
     return () => ipcRenderer.removeListener('stt:state', listener)
+  },
+  onAiExpression: (callback: (payload: { emotion: string }) => void): (() => void) => {
+    const listener = (
+      _event: Electron.IpcRendererEvent,
+      payload: { emotion: string }
+    ): void => callback(payload)
+    ipcRenderer.on('ai:expression', listener)
+    return () => ipcRenderer.removeListener('ai:expression', listener)
   }
 }
 

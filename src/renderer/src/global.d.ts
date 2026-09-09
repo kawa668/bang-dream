@@ -43,6 +43,7 @@ declare global {
       getSttState: (requestId: RequestId) => Promise<SttStateMessage | null>
       onSttResult: (callback: (payload: { requestId: RequestId; text: string }) => void) => () => void
       onSttState: (callback: (message: SttStateMessage) => void) => () => void
+      onAiExpression: (callback: (payload: { emotion: string }) => void) => () => void
       getConfig: () => Promise<LLMSettingsView | null>
       saveConfig: (settings: LLMSettingsSave) => Promise<LLMSettingsView | null>
     }
