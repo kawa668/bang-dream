@@ -24,6 +24,10 @@ export const DEFAULT_CONFIG: AppConfig = {
     enabled: false,
     selectedVoice: '若叶睦',
     ttsEndpoint: 'http://127.0.0.1:9880',
+    sttEndpoint: 'http://127.0.0.1:9881',
+    whisperModel: 'large-v3-turbo',
+    sttPrecision: 'auto',
+    sttTimeoutMs: 600000,
     gptSovitsDir: 'D:\\GPT-SOVITS\\GPT-SoVITS-v2pro-20250604-nvidia50\\GPT-SoVITS-v2pro-20250604-nvidia50',
     trainingAudioDir: 'D:\\AGENT\\live\\训练音频',
     startupTimeoutMs: 300000
@@ -45,6 +49,12 @@ function normalizeVoice(
       : DEFAULT_CONFIG.voice.enabled,
     selectedVoice: isVoiceId(selected) ? selected : DEFAULT_CONFIG.voice.selectedVoice,
     ttsEndpoint: source.ttsEndpoint?.trim() || DEFAULT_CONFIG.voice.ttsEndpoint,
+    sttEndpoint: source.sttEndpoint?.trim() || DEFAULT_CONFIG.voice.sttEndpoint,
+    whisperModel: source.whisperModel?.trim() || DEFAULT_CONFIG.voice.whisperModel,
+    sttPrecision: source.sttPrecision?.trim() || DEFAULT_CONFIG.voice.sttPrecision,
+    sttTimeoutMs: Number.isFinite(source.sttTimeoutMs)
+      ? source.sttTimeoutMs!
+      : DEFAULT_CONFIG.voice.sttTimeoutMs,
     gptSovitsDir: source.gptSovitsDir?.trim() || DEFAULT_CONFIG.voice.gptSovitsDir,
     trainingAudioDir: source.trainingAudioDir?.trim() || DEFAULT_CONFIG.voice.trainingAudioDir,
     startupTimeoutMs: Number.isFinite(source.startupTimeoutMs)

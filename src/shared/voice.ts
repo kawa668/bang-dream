@@ -44,3 +44,15 @@ export interface VoiceStateMessage {
   requestId?: string
   state: VoiceStateView
 }
+
+export type SttRuntimeState = 'idle' | 'starting' | 'transcribing' | 'error'
+
+export interface SttStateView {
+  runtimeState: SttRuntimeState
+  message?: string
+}
+
+export interface SttStateMessage {
+  requestId?: string
+  state: SttStateView
+}

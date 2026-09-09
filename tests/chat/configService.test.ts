@@ -41,6 +41,10 @@ describe('ConfigService', () => {
     expect(config.llm.apiKeyEncrypted).toBe('')
     expect(config.voice.selectedVoice).toBe('若叶睦')
     expect(config.voice.enabled).toBe(false)
+    expect(config.voice.sttEndpoint).toBe('http://127.0.0.1:9881')
+    expect(config.voice.whisperModel).toBe('large-v3-turbo')
+    expect(config.voice.sttPrecision).toBe('auto')
+    expect(config.voice.sttTimeoutMs).toBe(600000)
   })
 
   it('migrates legacy defaultVoice to selectedVoice', async () => {

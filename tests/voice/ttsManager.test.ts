@@ -8,6 +8,10 @@ const voiceConfig: VoiceConfig = {
   enabled: false,
   selectedVoice: '若叶睦',
   ttsEndpoint: 'http://127.0.0.1:9880',
+  sttEndpoint: 'http://127.0.0.1:9881',
+  whisperModel: 'large-v3-turbo',
+  sttPrecision: 'auto',
+  sttTimeoutMs: 600000,
   gptSovitsDir: 'D:/gpt',
   trainingAudioDir: 'D:/audio',
   startupTimeoutMs: 2000

@@ -21,6 +21,10 @@ export interface VoiceConfig {
   enabled: boolean
   selectedVoice: VoiceId
   ttsEndpoint: string
+  sttEndpoint: string
+  whisperModel: string
+  sttPrecision: string
+  sttTimeoutMs: number
   gptSovitsDir: string
   trainingAudioDir: string
   startupTimeoutMs: number
