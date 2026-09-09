@@ -2,7 +2,7 @@ import { appendFile } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 
-import { app, BrowserWindow, globalShortcut, ipcMain, screen } from 'electron'
+import { app, BrowserWindow, globalShortcut, ipcMain, screen, session } from 'electron'
 import { ChatManager } from './chat/chatManager'
 import type { ChatEvent } from './chat/chatManager'
 import { ConversationManager } from './chat/conversationManager'
@@ -10,11 +10,14 @@ import { OpenAICompatibleProvider } from './chat/llmProvider'
 import { ConfigService } from './config'
 import { ElectronSecretStore } from './electronSecretStore'
 import type { AppConfig, LLMSettingsSave } from '../shared/chat'
-import type { VoiceId, VoiceStateMessage } from '../shared/voice'
+import type { SttStateMessage, VoiceId, VoiceStateMessage } from '../shared/voice'
 import { isVoiceId } from '../shared/voice'
 import { GPTSoVITSProvider } from './voice/gptSoVITSProvider'
+import { FasterWhisperProvider } from './voice/fasterWhisperProvider'
 import { TTSManager } from './voice/ttsManager'
+import { STTManager } from './voice/sttManager'
 import { ElectronVoiceProcessLauncher } from './voice/electronVoiceProcessLauncher'
+import { ElectronSttProcessLauncher } from './voice/electronSttProcessLauncher'
 import { buildVoiceCatalog } from './voice/voiceCatalog'
 import { AudioPlayer } from './voice/audioPlayer'
 import { ElectronAudioSink } from './voice/electronAudioSink'
@@ -36,6 +39,7 @@ let chatManager: ChatManager | null = null
 let configService: ConfigService | null = null
 let appConfig: AppConfig | null = null
 let voiceManager: TTSManager | null = null
+let sttManager: STTManager | null = null
 let audioPlayer: AudioPlayer | null = null
 let audioSink: ElectronAudioSink | null = null
 let currentModelId: string | null = null
@@ -165,13 +169,37 @@ function setupVoiceSystem(): void {
   })
 }
 
+function setupSttSystem(): void {
+  if (!appConfig) return
+  sttManager = new STTManager({
+    endpoint: appConfig.voice.sttEndpoint,
+    gptSovitsDir: appConfig.voice.gptSovitsDir,
+    model: appConfig.voice.whisperModel,
+    precision: appConfig.voice.sttPrecision,
+    timeoutMs: appConfig.voice.sttTimeoutMs,
+    scriptPath: join(app.getAppPath(), 'scripts', 'asr_api.py'),
+    launcher: new ElectronSttProcessLauncher(),
+    provider: new FasterWhisperProvider({ endpoint: appConfig.voice.sttEndpoint }),
+    onState: (message: SttStateMessage) => {
+      controlWindow?.webContents.send('stt:state', message)
+    },
+    onResult: (requestId, text) => {
+      controlWindow?.webContents.send('stt:result', { requestId, text })
+    }
+  })
+}
+
 app.whenReady().then(async () => {
   configService = new ConfigService(
     join(app.getPath('userData'), 'config.json'),
     new ElectronSecretStore()
   )
   appConfig = await configService.load()
+  session.defaultSession.setPermissionRequestHandler((_webContents, permission, callback) => {
+    callback(permission === 'media')
+  })
   setupVoiceSystem()
+  setupSttSystem()
   rebuildChatManager()
 
   createOutputWindow()
@@ -220,6 +248,18 @@ app.whenReady().then(async () => {
 
   ipcMain.handle('voice:get', (_event, requestId: string) => (
     voiceManager?.stateMessage(requestId) ?? null
+  ))
+
+  ipcMain.on('stt:transcribe', (_event, payload: {
+    requestId: string
+    audio: Uint8Array
+  }) => {
+    if (!payload?.requestId) return
+    void sttManager?.transcribe(payload.audio, payload.requestId)
+  })
+
+  ipcMain.handle('stt:get', (_event, requestId: string) => (
+    sttManager?.stateMessage(requestId) ?? null
   ))
 
   ipcMain.on('voice:set-enabled', (_event, payload: {
@@ -307,10 +347,13 @@ app.whenReady().then(async () => {
 })
 
 app.on('before-quit', (event) => {
-  if (!voiceManager || quitting) return
+  if ((!voiceManager && !sttManager) || quitting) return
   event.preventDefault()
   quitting = true
-  void voiceManager.dispose().finally(() => {
+  void Promise.all([
+    voiceManager?.dispose() ?? Promise.resolve(),
+    sttManager?.dispose() ?? Promise.resolve()
+  ]).finally(() => {
     audioPlayer?.stopAll()
     app.quit()
   })
