@@ -2,6 +2,8 @@ import { groupActions } from '../../shared/actionCategories'
 import { groupModelsByCharacter } from '../../shared/modelCategories'
 import type { ModelDescriptor, OutfitId } from '../../shared/types'
 import { iconForCharacter } from '../../shared/characterIcons'
+import { pickExpressionAction } from '../../shared/emotion'
+import type { Emotion } from '../../shared/emotion'
 import { Live2DRenderer } from './live2d'
 import { ModelManager } from './modelManager'
 import { fetchModelManifest } from './models'
@@ -163,6 +165,17 @@ async function main(): Promise<void> {
     manualActionUntil = Date.now() + 8000
     const played = renderer.playMotion(action)
     window.api.reportStatus(played ? `动作：${action}` : `当前模型没有动作：${action}`)
+  })
+
+  window.api.onAiExpression(({ emotion }) => {
+    const action = pickExpressionAction(
+      renderer.getAvailableActions(),
+      emotion as Emotion
+    )
+    if (!action) return
+    manualActionUntil = Date.now() + 8000
+    renderer.playMotion(action)
+    window.api.reportStatus(`情绪动作：${action}`)
   })
 
   const voiceAudio = document.querySelector<HTMLAudioElement>('#voice-audio')
