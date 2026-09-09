@@ -110,6 +110,9 @@ const api = {
   setVoiceId: (requestId: RequestId, voiceId: VoiceId): void => {
     ipcRenderer.send('voice:set-voice', { requestId, voiceId })
   },
+  setVoiceConversation: (requestId: RequestId, enabled: boolean): void => {
+    ipcRenderer.send('voice:set-conversation', { requestId, enabled })
+  },
   onVoiceState: (callback: (message: VoiceStateMessage) => void): (() => void) => {
     const listener = (_event: Electron.IpcRendererEvent, message: VoiceStateMessage): void => callback(message)
     ipcRenderer.on('voice:state', listener)

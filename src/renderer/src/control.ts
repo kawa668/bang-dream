@@ -26,6 +26,7 @@ const maxHistoryInput = document.querySelector<HTMLInputElement>('#llm-max-histo
 const configSave = document.querySelector<HTMLButtonElement>('#config-save')
 const configStatus = document.querySelector<HTMLParagraphElement>('#config-status')
 const voiceEnabled = document.querySelector<HTMLInputElement>('#voice-enabled')
+const voiceConversation = document.querySelector<HTMLInputElement>('#voice-conversation')
 const voiceSelect = document.querySelector<HTMLSelectElement>('#voice-select')
 const voiceStatus = document.querySelector<HTMLParagraphElement>('#voice-status')
 const sttButton = document.querySelector<HTMLButtonElement>('#stt-button')
@@ -234,6 +235,9 @@ function applyVoiceState(message: VoiceStateMessage): void {
   if (voiceEnabled && voiceEnabled.checked !== state.enabled) {
     voiceEnabled.checked = state.enabled
   }
+  if (voiceConversation && voiceConversation.checked !== state.voiceConversationEnabled) {
+    voiceConversation.checked = state.voiceConversationEnabled
+  }
   if (voiceSelect && voiceSelect.value !== state.selectedVoice) {
     voiceSelect.value = state.selectedVoice
   }
@@ -410,6 +414,14 @@ voiceEnabled?.addEventListener('change', () => {
   window.api.setVoiceEnabled(createRequestId('voice-enabled'), voiceEnabled.checked)
 })
 
+voiceConversation?.addEventListener('change', () => {
+  const enabled = voiceConversation.checked
+  window.api.setVoiceConversation(createRequestId('voice-conversation'), enabled)
+  if (enabled && voiceEnabled && !voiceEnabled.checked) {
+    window.api.setVoiceEnabled(createRequestId('voice-enabled'), true)
+  }
+})
+
 voiceSelect?.addEventListener('change', () => {
   const option = VOICE_OPTIONS.find((voice) => voice.id === voiceSelect.value)
   if (option) window.api.setVoiceId(createRequestId('voice-select'), option.id)
@@ -436,8 +448,13 @@ window.api.onSttState((message) => {
 })
 
 window.api.onSttResult((event) => {
-  if (chatInput) chatInput.value = event.text
-  chatInput?.focus()
+  if (voiceConversation?.checked) {
+    if (chatInput) chatInput.value = ''
+    window.api.sendChatMessage(createRequestId('chat'), event.text)
+  } else if (chatInput) {
+    chatInput.value = event.text
+    chatInput.focus()
+  }
 })
 
 void loadConfig()

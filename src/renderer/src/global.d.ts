@@ -37,6 +37,7 @@ declare global {
       getVoiceState: (requestId: RequestId) => Promise<VoiceStateMessage | null>
       setVoiceEnabled: (requestId: RequestId, enabled: boolean) => void
       setVoiceId: (requestId: RequestId, voiceId: VoiceId) => void
+      setVoiceConversation: (requestId: RequestId, enabled: boolean) => void
       onVoiceState: (callback: (message: VoiceStateMessage) => void) => () => void
       transcribeAudio: (requestId: RequestId, audio: Uint8Array) => void
       getSttState: (requestId: RequestId) => Promise<SttStateMessage | null>
