@@ -111,7 +111,7 @@ GET  /control?command=exit → 200            # 进程退出
   ```ts
   interface SpeechToTextProvider {
     probeReady(): Promise<boolean>
-    transcribe(audioPath: string, language?: string): Promise<string>
+    transcribe(audio: Uint8Array, language?: string): Promise<string>
     requestExit(): Promise<void>
   }
   ```
@@ -128,7 +128,7 @@ GET  /control?command=exit → 200            # 进程退出
 `FasterWhisperProvider` 实现 `SpeechToTextProvider`：
 
 - `probeReady()`：`GET {endpoint}/health`，能返回 `ok: true` 视为就绪；连接失败返回 false。
-- `transcribe(audioPath, language?)`：`POST {endpoint}/transcribe`，`multipart/form-data`，字段 `file`；返回 JSON 的 `text`。HTTP 非 2xx 时读取响应体抛中文错误。
+- `transcribe(audio, language?)`：接收音频字节，`POST {endpoint}/transcribe`，`multipart/form-data`，字段 `file`；返回 JSON 的 `text`。HTTP 非 2xx 时读取响应体抛中文错误。
 - `requestExit()`：`GET {endpoint}/control?command=exit`，捕获连接错误忽略（服务已退出）。
 - 支持注入 `fetchImpl` 便于测试（与 `GPTSoVITSProvider` 一致）。
 
@@ -138,10 +138,9 @@ GET  /control?command=exit → 200            # 进程退出
 
 - 字段：`endpoint`、`model`、`precision`、`gptSovitsDir`、`timeoutMs`、`pollIntervalMs`。
 - `transcribe(audioBytes: Uint8Array, requestId: string)`：仅在收到调用时运行。
-  1. 写临时音频文件（`os.tmpdir` + requestId）。
-  2. `ensureStarted()`：`probeReady` 失败则用 launcher 启动子进程，轮询 `/health` 直到就绪或超时；成功则 `managed=true`。
-  3. 调用 provider `transcribe(path)`，得到文本。
-  4. 删除临时文件，返回文本，并发出 `stt:result`。
+  1. `ensureStarted()`：`probeReady` 失败则用 launcher 启动子进程，轮询 `/health` 直到就绪或超时；成功则 `managed=true`。
+  2. 将 `audioBytes` 直接交给 provider `transcribe(audio)`，得到文本。
+  3. 若文本非空，发出 `stt:result`；主进程不落盘音频字节，临时文件只存在于 STT 服务端。
 - 状态机：`idle | starting | transcribing | error`。`starting` 覆盖首次模型下载与进程启动；只影响 `stt:state`，不向聊天区抛错。
 - `dispose()`：应用退出时若 `managed` 为真则终止自启动子进程。
 - `stateMessage(requestId?)` 返回 `SttStateMessage`。
