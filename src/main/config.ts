@@ -36,7 +36,7 @@ export const DEFAULT_CONFIG: AppConfig = {
     voiceConversationEnabled: false
   },
   currentCharacter: 'mutsumi',
-  characters: {}
+  characters: { mutsumi: {}, anon: {}, sakiko: {} }
 }
 
 function cloneDefaults(): AppConfig {

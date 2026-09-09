@@ -57,8 +57,8 @@ const api = {
     ipcRenderer.on('chat:delta', listener)
     return () => ipcRenderer.removeListener('chat:delta', listener)
   },
-  onChatComplete: (callback: (event: { requestId: RequestId; message: string }) => void): (() => void) => {
-    const listener = (_event: Electron.IpcRendererEvent, payload: { requestId: RequestId; message: string }): void => callback(payload)
+  onChatComplete: (callback: (event: { requestId: RequestId; message: string; emotion?: string }) => void): (() => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, payload: { requestId: RequestId; message: string; emotion?: string }): void => callback(payload)
     ipcRenderer.on('chat:complete', listener)
     return () => ipcRenderer.removeListener('chat:complete', listener)
   },

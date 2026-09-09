@@ -1,5 +1,6 @@
 import type { ConversationManager } from './conversationManager'
 import type { LLMProvider } from './llmProvider'
+import type { ChatMessage } from '../../shared/chat'
 
 export type ChatEvent =
   | { type: 'start'; requestId: string }
@@ -49,5 +50,9 @@ export class ChatManager {
 
   clear(): void {
     this.conversation.clear()
+  }
+
+  restoreConversation(messages: ChatMessage[]): void {
+    this.conversation.restore(messages)
   }
 }

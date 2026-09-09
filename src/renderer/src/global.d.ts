@@ -20,7 +20,7 @@ declare global {
       clearChat: (requestId: RequestId) => void
       onChatStart: (callback: (event: { requestId: RequestId }) => void) => () => void
       onChatDelta: (callback: (event: { requestId: RequestId; delta: string }) => void) => () => void
-      onChatComplete: (callback: (event: { requestId: RequestId; message: string }) => void) => () => void
+      onChatComplete: (callback: (event: { requestId: RequestId; message: string; emotion?: string }) => void) => () => void
       onChatError: (callback: (event: { requestId: RequestId; message: string }) => void) => () => void
       onChatClear: (callback: (event: { requestId: RequestId }) => void) => () => void
       onVoicePlay: (callback: (payload: {

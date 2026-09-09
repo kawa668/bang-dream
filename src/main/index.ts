@@ -12,10 +12,13 @@ import { ElectronSecretStore } from './electronSecretStore'
 import type { AppConfig, LLMSettingsSave } from '../shared/chat'
 import type { SttStateMessage, VoiceId, VoiceStateMessage } from '../shared/voice'
 import { isVoiceId } from '../shared/voice'
+import { characterForModel, profileForModel } from '../shared/characterProfiles'
+import { detectEmotion } from '../shared/emotion'
 import { GPTSoVITSProvider } from './voice/gptSoVITSProvider'
 import { FasterWhisperProvider } from './voice/fasterWhisperProvider'
 import { TTSManager } from './voice/ttsManager'
 import { STTManager } from './voice/sttManager'
+import { JSONMemoryStore } from './memory/memoryStore'
 import { ElectronVoiceProcessLauncher } from './voice/electronVoiceProcessLauncher'
 import { ElectronSttProcessLauncher } from './voice/electronSttProcessLauncher'
 import { buildVoiceCatalog } from './voice/voiceCatalog'
@@ -43,6 +46,8 @@ let sttManager: STTManager | null = null
 let audioPlayer: AudioPlayer | null = null
 let audioSink: ElectronAudioSink | null = null
 let currentModelId: string | null = null
+let memoryStore: JSONMemoryStore | null = null
+let currentEmotion: string | null = null
 let quitting = false
 
 function resolveAppIcon(): string | undefined {
@@ -121,22 +126,27 @@ function broadcastChatEvent(event: ChatEvent): void {
 }
 
 function handleChatEvent(event: ChatEvent): void {
-  broadcastChatEvent(event)
   if (event.type === 'complete') {
+    currentEmotion = detectEmotion(event.message)
+    controlWindow?.webContents.send('chat:complete', { ...event, emotion: currentEmotion })
+    void memoryStore?.append({ role: 'assistant', content: event.message, createdAt: Date.now() })
     void voiceManager?.speak(event.message, event.requestId)
+  } else {
+    broadcastChatEvent(event)
   }
 }
 
 function rebuildChatManager(): void {
   if (!configService || !appConfig) return
+  const profile = configService.effectiveProfile(appConfig, appConfig.currentCharacter)
   const conversation = new ConversationManager(
     appConfig.llm.maxHistory,
-    appConfig.llm.systemPrompt
+    profile.systemPrompt
   )
   const provider = new OpenAICompatibleProvider({
     baseUrl: appConfig.llm.baseUrl,
     apiKey: configService.getApiKey(appConfig),
-    model: appConfig.llm.model,
+    model: profile.model,
     temperature: appConfig.llm.temperature,
     timeoutMs: appConfig.llm.timeoutMs
   })
@@ -202,6 +212,12 @@ app.whenReady().then(async () => {
   setupSttSystem()
   rebuildChatManager()
 
+  memoryStore = new JSONMemoryStore(join(app.getPath('userData'), 'memory.json'))
+  const past = await memoryStore.load()
+  if (past.length > 0 && chatManager) {
+    chatManager.restoreConversation(past.map(({ role, content }) => ({ role, content })))
+  }
+
   createOutputWindow()
   createControlWindow()
 
@@ -217,6 +233,17 @@ app.whenReady().then(async () => {
     currentModelId = id
     controlWindow?.webContents.send('model:switch', id)
     voiceManager?.setModel(id)
+    if (!configService || !appConfig) return
+    const role = characterForModel(id)
+    if (role !== appConfig.currentCharacter) {
+      appConfig = configService.applyCharacterDefaults(
+        appConfig,
+        role,
+        profileForModel(id)
+      )
+      void configService.save(appConfig).catch(() => {})
+      rebuildChatManager()
+    }
   })
 
   ipcMain.on('model:switch-request', (_event, id: string) => {
@@ -237,12 +264,14 @@ app.whenReady().then(async () => {
 
   ipcMain.on('chat:send', (_event, payload: { requestId: string; text: string }) => {
     if (!payload?.requestId) return
+    void memoryStore?.append({ role: 'user', content: payload.text.trim(), createdAt: Date.now() })
     void chatManager?.sendUserMessage(payload.requestId, payload.text)
   })
 
   ipcMain.on('chat:clear', (_event, payload: { requestId: string }) => {
     if (!payload?.requestId) return
     chatManager?.clear()
+    void memoryStore?.clear()
     controlWindow?.webContents.send('chat:clear', payload)
   })
 
