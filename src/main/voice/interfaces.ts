@@ -23,3 +23,19 @@ export interface GptSoVITSProcess {
 export interface VoiceProcessLauncher {
   launch(options: { gptSovitsDir: string; port: number }): GptSoVITSProcess
 }
+
+export interface SpeechToTextProvider {
+  probeReady(): Promise<boolean>
+  transcribe(audio: Uint8Array, language?: string): Promise<string>
+  requestExit(): Promise<void>
+}
+
+export interface SttProcessLauncher {
+  launch(options: {
+    gptSovitsDir: string
+    port: number
+    model: string
+    precision: string
+    scriptPath: string
+  }): GptSoVITSProcess
+}
