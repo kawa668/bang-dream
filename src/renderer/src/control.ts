@@ -28,8 +28,13 @@ const configStatus = document.querySelector<HTMLParagraphElement>('#config-statu
 const voiceEnabled = document.querySelector<HTMLInputElement>('#voice-enabled')
 const voiceSelect = document.querySelector<HTMLSelectElement>('#voice-select')
 const voiceStatus = document.querySelector<HTMLParagraphElement>('#voice-status')
+const sttButton = document.querySelector<HTMLButtonElement>('#stt-button')
+const sttStatus = document.querySelector<HTMLParagraphElement>('#stt-status')
 
 let assistantContent: HTMLDivElement | null = null
+let mediaRecorder: MediaRecorder | null = null
+let recordingStream: MediaStream | null = null
+let sttChunks: Blob[] = []
 
 const USER_AVATAR_SVG =
   '<svg viewBox="0 0 24 24" width="14" height="14" role="presentation">' +
@@ -45,6 +50,52 @@ const VOICE_STATE_LABELS: Record<string, string> = {
   playing: '正在播放语音...',
   stopping: '正在停止语音服务...',
   error: '语音服务错误'
+}
+
+const STT_STATE_LABELS: Record<string, string> = {
+  idle: '语音识别就绪',
+  starting: '正在启动识别服务（首次可能下载模型）...',
+  transcribing: '正在识别...',
+  error: '语音识别错误'
+}
+
+function cleanupRecording(): void {
+  mediaRecorder = null
+  recordingStream?.getTracks().forEach((track) => track.stop())
+  recordingStream = null
+  sttChunks = []
+  sttButton?.classList.remove('recording')
+}
+
+async function startRecording(): Promise<void> {
+  if (mediaRecorder || !sttButton) return
+  sttButton.classList.add('recording')
+  try {
+    recordingStream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    mediaRecorder = new MediaRecorder(recordingStream)
+    sttChunks = []
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0) sttChunks.push(event.data)
+    }
+    mediaRecorder.onstop = async () => {
+      const type = mediaRecorder?.mimeType ?? 'audio/webm'
+      const blob = new Blob(sttChunks, { type })
+      const audio = new Uint8Array(await blob.arrayBuffer())
+      cleanupRecording()
+      window.api.transcribeAudio(createRequestId('stt'), audio)
+    }
+    mediaRecorder.start()
+  } catch (error) {
+    sttButton.classList.remove('recording')
+    if (sttStatus) {
+      sttStatus.textContent = error instanceof Error ? error.message : String(error)
+    }
+    cleanupRecording()
+  }
+}
+
+function stopRecording(): void {
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop()
 }
 
 const manifestByModel = new Map<OutfitId, ModelDescriptor>()
@@ -364,8 +415,29 @@ voiceSelect?.addEventListener('change', () => {
   if (option) window.api.setVoiceId(createRequestId('voice-select'), option.id)
 })
 
+sttButton?.addEventListener('pointerdown', (event) => {
+  event.preventDefault()
+  void startRecording()
+})
+sttButton?.addEventListener('pointerup', () => stopRecording())
+sttButton?.addEventListener('pointerleave', () => stopRecording())
+
 window.api.onVoiceState((message) => {
   applyVoiceState(message)
+})
+
+window.api.onSttState((message) => {
+  const label = STT_STATE_LABELS[message.state.runtimeState] ?? message.state.runtimeState
+  if (sttStatus) {
+    sttStatus.textContent = message.state.message && message.state.runtimeState === 'error'
+      ? `${label}：${message.state.message}`
+      : label
+  }
+})
+
+window.api.onSttResult((event) => {
+  if (chatInput) chatInput.value = event.text
+  chatInput?.focus()
 })
 
 void loadConfig()

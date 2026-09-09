@@ -2,7 +2,7 @@ import { contextBridge, ipcRenderer } from 'electron'
 import type { OutfitId } from '../shared/types'
 import type { LLMSettingsSave, LLMSettingsView } from '../shared/chat'
 import type { RequestId } from '../shared/requestId'
-import type { VoiceId, VoiceStateMessage } from '../shared/voice'
+import type { SttStateMessage, VoiceId, VoiceStateMessage } from '../shared/voice'
 
 const api = {
   onModelSwitch: (callback: (id: OutfitId) => void): (() => void) => {
@@ -118,7 +118,26 @@ const api = {
   getConfig: (): Promise<LLMSettingsView | null> => ipcRenderer.invoke('config:get'),
   saveConfig: (settings: LLMSettingsSave): Promise<LLMSettingsView | null> => (
     ipcRenderer.invoke('config:save', settings)
-  )
+  ),
+  transcribeAudio: (requestId: RequestId, audio: Uint8Array): void => {
+    ipcRenderer.send('stt:transcribe', { requestId, audio })
+  },
+  getSttState: (requestId: RequestId): Promise<SttStateMessage | null> => (
+    ipcRenderer.invoke('stt:get', requestId)
+  ),
+  onSttResult: (callback: (payload: { requestId: RequestId; text: string }) => void): (() => void) => {
+    const listener = (
+      _event: Electron.IpcRendererEvent,
+      payload: { requestId: RequestId; text: string }
+    ): void => callback(payload)
+    ipcRenderer.on('stt:result', listener)
+    return () => ipcRenderer.removeListener('stt:result', listener)
+  },
+  onSttState: (callback: (message: SttStateMessage) => void): (() => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, message: SttStateMessage): void => callback(message)
+    ipcRenderer.on('stt:state', listener)
+    return () => ipcRenderer.removeListener('stt:state', listener)
+  }
 }
 
 contextBridge.exposeInMainWorld('api', api)
