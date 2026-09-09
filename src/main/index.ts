@@ -278,6 +278,20 @@ app.whenReady().then(async () => {
     voiceManager?.setVoice(payload.voiceId, payload.requestId)
   })
 
+  ipcMain.on('voice:set-conversation', (_event, payload: {
+    requestId: string
+    enabled: boolean
+  }) => {
+    if (!payload?.requestId || !configService || !appConfig) return
+    appConfig = configService.applyVoiceConfig(appConfig, {
+      enabled: appConfig.voice.enabled,
+      selectedVoice: appConfig.voice.selectedVoice,
+      voiceConversationEnabled: Boolean(payload.enabled)
+    })
+    void configService.save(appConfig).catch(() => {})
+    voiceManager?.setVoiceConversation(Boolean(payload.enabled), payload.requestId)
+  })
+
   ipcMain.on('voice:playback-ended', (_event, payload: {
     requestId: string
     playbackId: string
