@@ -3,16 +3,15 @@ import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 
 import { app, BrowserWindow, globalShortcut, ipcMain, screen, session } from 'electron'
-import { ChatManager } from './chat/chatManager'
 import type { ChatEvent } from './chat/chatManager'
-import { ConversationManager } from './chat/conversationManager'
+import { ChatSessionController } from './chat/chatSessionController'
 import { OpenAICompatibleProvider } from './chat/llmProvider'
 import { ConfigService } from './config'
 import { ElectronSecretStore } from './electronSecretStore'
 import type { AppConfig, LLMSettingsSave } from '../shared/chat'
+import { createRequestId } from '../shared/requestId'
 import type { SttStateMessage, VoiceId, VoiceStateMessage } from '../shared/voice'
 import { isVoiceId } from '../shared/voice'
-import { characterForModel, profileForCharacter } from '../shared/characterProfiles'
 import { detectEmotion } from '../shared/emotion'
 import { GPTSoVITSProvider } from './voice/gptSoVITSProvider'
 import { FasterWhisperProvider } from './voice/fasterWhisperProvider'
@@ -38,7 +37,7 @@ let modelBounds: { x: number; y: number; width: number; height: number } | null 
 let isDragging = false
 let isMenuOpen = false
 let mouseInterceptEnabled = false
-let chatManager: ChatManager | null = null
+let chatSessionController: ChatSessionController | null = null
 let configService: ConfigService | null = null
 let appConfig: AppConfig | null = null
 let voiceManager: TTSManager | null = null
@@ -137,24 +136,6 @@ function handleChatEvent(event: ChatEvent): void {
   }
 }
 
-function rebuildChatManager(): void {
-  if (!configService || !appConfig) return
-  const profile = profileForCharacter(appConfig.currentCharacter)
-  const conversation = new ConversationManager(
-    appConfig.llm.maxHistory,
-    profile.systemPrompt
-  )
-  const provider = new OpenAICompatibleProvider({
-    baseUrl: appConfig.llm.baseUrl,
-    apiKey: configService.getApiKey(appConfig),
-    sessionId: appConfig.llm.sessionId,
-    model: appConfig.llm.model,
-    temperature: appConfig.llm.temperature,
-    timeoutMs: appConfig.llm.timeoutMs
-  })
-  chatManager = new ChatManager(conversation, provider, handleChatEvent)
-}
-
 function setupVoiceSystem(): void {
   if (!configService || !appConfig) return
   const sink = new ElectronAudioSink(() => outputWindow)
@@ -203,23 +184,58 @@ function setupSttSystem(): void {
 }
 
 app.whenReady().then(async () => {
-  configService = new ConfigService(
+  const service = new ConfigService(
     join(app.getPath('userData'), 'config.json'),
     new ElectronSecretStore()
   )
-  appConfig = await configService.load()
+  configService = service
+  const loadedConfig = await service.load()
+  appConfig = loadedConfig
   session.defaultSession.setPermissionRequestHandler((_webContents, permission, callback) => {
     callback(permission === 'media')
   })
   setupVoiceSystem()
   setupSttSystem()
-  rebuildChatManager()
 
-  memoryStore = new JSONMemoryStore(join(app.getPath('userData'), 'memory.json'))
-  const past = await memoryStore.load()
-  if (past.length > 0 && chatManager) {
-    chatManager.restoreConversation(past.map(({ role, content }) => ({ role, content })))
-  }
+  const store = new JSONMemoryStore(join(app.getPath('userData'), 'memory.json'))
+  memoryStore = store
+  chatSessionController = new ChatSessionController({
+    config: loadedConfig,
+    applyCharacter: (_config, characterId) => {
+      return service.applyCharacter(appConfig ?? loadedConfig, characterId)
+    },
+    persist: async (config) => {
+      await service.save(config)
+      appConfig = config
+    },
+    createProvider: (config) => new OpenAICompatibleProvider({
+      baseUrl: config.llm.baseUrl,
+      apiKey: service.getApiKey(config),
+      sessionId: config.llm.sessionId,
+      model: config.llm.model,
+      temperature: config.llm.temperature,
+      timeoutMs: config.llm.timeoutMs
+    }),
+    cancelVoice: () => {
+      voiceManager?.cancelSpeech()
+      audioPlayer?.stopAll()
+    },
+    applyVoice: (voiceId) => voiceManager?.setVoice(voiceId),
+    clearMemory: () => store.clear(),
+    onChatEvent: handleChatEvent,
+    onClear: (requestId) => {
+      controlWindow?.webContents.send('chat:clear', { requestId })
+    },
+    onCharacterChanged: (character) => {
+      controlWindow?.webContents.send('character:changed', {
+        id: character.id,
+        name: character.name
+      })
+    },
+    onError: (requestId, message) => {
+      controlWindow?.webContents.send('chat:error', { requestId, message })
+    }
+  })
 
   createOutputWindow()
   createControlWindow()
@@ -235,14 +251,7 @@ app.whenReady().then(async () => {
   ipcMain.on('model:changed', (_event, id: string) => {
     currentModelId = id
     controlWindow?.webContents.send('model:switch', id)
-    voiceManager?.setModel(id)
-    if (!configService || !appConfig) return
-    const role = characterForModel(id)
-    if (role !== appConfig.currentCharacter) {
-      appConfig = configService.applyCharacter(appConfig, role)
-      void configService.save(appConfig).catch(() => {})
-      rebuildChatManager()
-    }
+    void chatSessionController?.switchToModel(id, createRequestId('model-change'))
   })
 
   ipcMain.on('model:switch-request', (_event, id: string) => {
@@ -264,14 +273,12 @@ app.whenReady().then(async () => {
   ipcMain.on('chat:send', (_event, payload: { requestId: string; text: string }) => {
     if (!payload?.requestId) return
     void memoryStore?.append({ role: 'user', content: payload.text.trim(), createdAt: Date.now() })
-    void chatManager?.sendUserMessage(payload.requestId, payload.text)
+    void chatSessionController?.send(payload.requestId, payload.text)
   })
 
   ipcMain.on('chat:clear', (_event, payload: { requestId: string }) => {
     if (!payload?.requestId) return
-    chatManager?.clear()
-    void memoryStore?.clear()
-    controlWindow?.webContents.send('chat:clear', payload)
+    void chatSessionController?.clear(payload.requestId)
   })
 
   ipcMain.handle('voice:get', (_event, requestId: string) => (
@@ -303,7 +310,7 @@ app.whenReady().then(async () => {
     voiceId: VoiceId
   }) => {
     if (!payload?.requestId || !isVoiceId(payload.voiceId)) return
-    voiceManager?.setVoice(payload.voiceId, payload.requestId)
+    void chatSessionController?.switchToVoice(payload.voiceId, payload.requestId)
   })
 
   ipcMain.on('voice:set-conversation', (_event, payload: {
@@ -346,10 +353,9 @@ app.whenReady().then(async () => {
 
   ipcMain.handle('config:save', async (_event, save: LLMSettingsSave) => {
     if (!configService || !appConfig) return null
-    appConfig = configService.applySave(appConfig, save)
-    await configService.save(appConfig)
-    rebuildChatManager()
-    return configService.toView(appConfig)
+    const nextConfig = configService.applySave(appConfig, save)
+    await chatSessionController?.updateConfig(nextConfig, createRequestId('config-save'))
+    return appConfig ? configService.toView(appConfig) : null
   })
 
   setInterval(() => {
@@ -392,6 +398,7 @@ app.on('before-quit', (event) => {
   if ((!voiceManager && !sttManager) || quitting) return
   event.preventDefault()
   quitting = true
+  chatSessionController?.dispose()
   void Promise.all([
     voiceManager?.dispose() ?? Promise.resolve(),
     sttManager?.dispose() ?? Promise.resolve()

@@ -360,6 +360,12 @@ window.api.onModelSwitch((id) => {
   void renderActions(id)
 })
 
+window.api.onCharacterChanged((character) => {
+  if (currentCharacterLabel) {
+    currentCharacterLabel.textContent = `当前角色：${character.name}`
+  }
+})
+
 window.api.onChatStart((_event) => {
   const message = appendChatMessage('assistant', '')
   assistantContent = message.querySelector<HTMLDivElement>('.chat-content')

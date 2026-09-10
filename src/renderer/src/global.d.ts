@@ -1,5 +1,6 @@
 import type { OutfitId } from '../../shared/types'
 import type { LLMSettingsSave, LLMSettingsView } from '../../shared/chat'
+import type { CharacterId } from '../../shared/characterProfiles'
 import type { RequestId } from '../../shared/requestId'
 import type { SttStateMessage, VoiceId, VoiceStateMessage } from '../../shared/voice'
 
@@ -23,6 +24,7 @@ declare global {
       onChatComplete: (callback: (event: { requestId: RequestId; message: string; emotion?: string }) => void) => () => void
       onChatError: (callback: (event: { requestId: RequestId; message: string }) => void) => () => void
       onChatClear: (callback: (event: { requestId: RequestId }) => void) => () => void
+      onCharacterChanged: (callback: (character: { id: CharacterId; name: string }) => void) => () => void
       onVoicePlay: (callback: (payload: {
         requestId: RequestId
         playbackId: string

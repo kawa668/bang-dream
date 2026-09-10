@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { OutfitId } from '../shared/types'
 import type { LLMSettingsSave, LLMSettingsView } from '../shared/chat'
+import type { CharacterId } from '../shared/characterProfiles'
 import type { RequestId } from '../shared/requestId'
 import type { SttStateMessage, VoiceId, VoiceStateMessage } from '../shared/voice'
 
@@ -71,6 +72,14 @@ const api = {
     const listener = (_event: Electron.IpcRendererEvent, payload: { requestId: RequestId }): void => callback(payload)
     ipcRenderer.on('chat:clear', listener)
     return () => ipcRenderer.removeListener('chat:clear', listener)
+  },
+  onCharacterChanged: (callback: (character: { id: CharacterId; name: string }) => void): (() => void) => {
+    const listener = (
+      _event: Electron.IpcRendererEvent,
+      character: { id: CharacterId; name: string }
+    ): void => callback(character)
+    ipcRenderer.on('character:changed', listener)
+    return () => ipcRenderer.removeListener('character:changed', listener)
   },
   onVoicePlay: (callback: (payload: {
     requestId: RequestId
