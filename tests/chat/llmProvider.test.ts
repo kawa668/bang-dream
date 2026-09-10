@@ -34,6 +34,7 @@ describe('OpenAICompatibleProvider', () => {
       baseUrl: 'https://relay.example.com/v1/',
       apiKey: 'secret',
       model: 'deepseek v4flash',
+      sessionId: 'ses_test-session',
       temperature: 0.8,
       timeoutMs: 5000
     })
@@ -46,7 +47,8 @@ describe('OpenAICompatibleProvider', () => {
     expect(url).toBe('https://relay.example.com/v1/chat/completions')
     expect(init.headers).toMatchObject({
       'Content-Type': 'application/json',
-      Authorization: 'Bearer secret'
+      Authorization: 'Bearer secret',
+      'x-opencode-session': 'ses_test-session'
     })
     const body = JSON.parse(String(init.body))
     expect(body).toMatchObject({
@@ -68,6 +70,7 @@ describe('OpenAICompatibleProvider', () => {
       baseUrl: 'https://relay.example.com',
       apiKey: 'secret',
       model: 'deepseek v4flash',
+      sessionId: 'ses_test-session',
       temperature: 0.8,
       timeoutMs: 5000
     })
@@ -84,6 +87,7 @@ describe('OpenAICompatibleProvider', () => {
       baseUrl: 'https://relay.example.com',
       apiKey: 'bad',
       model: 'deepseek v4flash',
+      sessionId: 'ses_test-session',
       temperature: 0.8,
       timeoutMs: 5000
     })
@@ -107,6 +111,7 @@ describe('OpenAICompatibleProvider', () => {
       baseUrl: 'https://relay.example.com',
       apiKey: 'secret',
       model: 'deepseek v4flash',
+      sessionId: 'ses_test-session',
       temperature: 0.8,
       timeoutMs: 10
     })

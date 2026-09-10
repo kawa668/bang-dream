@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
 import type { AppConfig, LLMSettingsSave, LLMSettingsView, VoiceConfig } from '../shared/chat'
@@ -20,6 +21,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   llm: {
     baseUrl: '',
     apiKeyEncrypted: '',
+    sessionId: '',
     model: 'deepseek-v4-flash',
     systemPrompt: '你是若叶睦，说话温柔克制，用中文简短回复。',
     temperature: 0.8,
@@ -45,6 +47,7 @@ export const DEFAULT_CONFIG: AppConfig = {
 
 function cloneDefaults(): AppConfig {
   const base = JSON.parse(JSON.stringify(DEFAULT_CONFIG)) as AppConfig
+  base.llm.sessionId = createSessionId()
   base.characters = normalizeCharacters(base.characters)
   return base
 }
@@ -94,10 +97,12 @@ function mergeDefaults(value: Partial<AppConfig> | undefined): AppConfig {
     : DEFAULT_CONFIG.currentCharacter
   const characters = normalizeCharacters(value?.characters)
   const legacyModel = normalizeModelId(value?.llm?.model)
+  const sessionId = normalizeSessionId(value?.llm?.sessionId) ?? createSessionId()
   const llm = {
     ...defaults.llm,
     ...value?.llm,
-    ...(legacyModel ? { model: legacyModel } : {})
+    ...(legacyModel ? { model: legacyModel } : {}),
+    sessionId
   }
   const currentOverride = characters[currentCharacter]
 
@@ -132,6 +137,16 @@ function normalizeCharacterOverride(
 function normalizeModelId(model?: string): string | undefined {
   if (!model) return model
   return LEGACY_MODEL_IDS[model] ?? model
+}
+
+function normalizeSessionId(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined
+  const sessionId = value.trim()
+  return sessionId || undefined
+}
+
+function createSessionId(): string {
+  return `ses_${randomUUID()}`
 }
 
 export class ConfigService {

@@ -3,6 +3,7 @@ import type { ChatMessage } from '../../shared/chat'
 export interface LLMProviderOptions {
   baseUrl: string
   apiKey: string
+  sessionId: string
   model: string
   temperature: number
   timeoutMs: number
@@ -25,7 +26,8 @@ export class OpenAICompatibleProvider implements LLMProvider {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${this.options.apiKey}`
+          Authorization: `Bearer ${this.options.apiKey}`,
+          'x-opencode-session': this.options.sessionId
         },
         body: JSON.stringify({
           model: this.options.model,

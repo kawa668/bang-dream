@@ -147,6 +147,7 @@ function rebuildChatManager(): void {
   const provider = new OpenAICompatibleProvider({
     baseUrl: appConfig.llm.baseUrl,
     apiKey: configService.getApiKey(appConfig),
+    sessionId: appConfig.llm.sessionId,
     model: profile.model,
     temperature: appConfig.llm.temperature,
     timeoutMs: appConfig.llm.timeoutMs

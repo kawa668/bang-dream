@@ -11,6 +11,7 @@ export interface ChatMessage {
 export interface LLMConfig {
   baseUrl: string
   apiKeyEncrypted: string
+  sessionId: string
   model: string
   systemPrompt: string
   temperature: number

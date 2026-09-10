@@ -38,6 +38,7 @@ describe('ConfigService', () => {
     const config = await service.load()
 
     expect(config.llm.model).toBe('deepseek-v4-flash')
+    expect(config.llm.sessionId).toMatch(/^ses_[0-9a-f-]{36}$/)
     expect(config.llm.apiKeyEncrypted).toBe('')
     expect(config.voice.selectedVoice).toBe('若叶睦')
     expect(config.voice.enabled).toBe(false)
@@ -143,13 +144,27 @@ describe('ConfigService', () => {
 
   it('migrates the legacy model id to the supported id', async () => {
     await writeFile(join(dir, 'config.json'), JSON.stringify({
-      llm: { model: 'deepseek v4flash' }
+      llm: {
+        model: 'deepseek v4flash',
+        sessionId: 'ses_092cf255-41ec-4605-bd6b-70ae3f482362'
+      }
     }), 'utf8')
     const service = new ConfigService(join(dir, 'config.json'), new FakeSecretStore())
     const config = await service.load()
 
     expect(config.llm.model).toBe('deepseek-v4-flash')
+    expect(config.llm.sessionId).toBe('ses_092cf255-41ec-4605-bd6b-70ae3f482362')
     expect(config.characters['mutsumi'].model).toBe('deepseek-v4-flash')
+  })
+
+  it('preserves a configured OpenCode session id', async () => {
+    await writeFile(join(dir, 'config.json'), JSON.stringify({
+      llm: { sessionId: 'ses_ffa09605-3186-493d-b5a2-8bf89c95b32d' }
+    }), 'utf8')
+    const service = new ConfigService(join(dir, 'config.json'), new FakeSecretStore())
+    const config = await service.load()
+
+    expect(config.llm.sessionId).toBe('ses_ffa09605-3186-493d-b5a2-8bf89c95b32d')
   })
 
   it('preserves a pre-existing custom model as the current character override', async () => {
