@@ -143,6 +143,19 @@ describe('TTSManager', () => {
     expect(manager.stateMessage().state.selectedVoice).toBe('白祥')
   })
 
+  it('tracks a model without changing the selected voice or persisting', () => {
+    const provider = new FakeProvider()
+    const launcher = new FakeLauncher()
+    const { manager, persisted, states } = createManager(provider, launcher)
+
+    manager.trackModel('037_casual-2023')
+
+    expect(manager.stateMessage().state.modelId).toBe('037_casual-2023')
+    expect(manager.stateMessage().state.selectedVoice).toBe('若叶睦')
+    expect(states.at(-1)?.state.modelId).toBe('037_casual-2023')
+    expect(persisted).toEqual([])
+  })
+
   it('kills the managed process when voice is disabled', async () => {
     const provider = new FakeProvider()
     provider.probeResults = [false, true]

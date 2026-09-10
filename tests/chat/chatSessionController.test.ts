@@ -155,6 +155,47 @@ describe('ChatSessionController', () => {
     expect(clearMemoryCalls).toBe(0)
   })
 
+  it('surfaces configuration persistence failures to the caller', async () => {
+    const controller = createController({
+      persist: async () => {
+        throw new Error('disk full')
+      }
+    })
+    const next = {
+      ...defaultTestConfig,
+      llm: { ...defaultTestConfig.llm, model: 'gpt-4o' }
+    }
+
+    await expect(controller.updateConfig(next, 'req-config')).rejects.toThrow('disk full')
+    expect(controller.characterId).toBe('mutsumi')
+  })
+
+  it('restores persisted messages into the current conversation', async () => {
+    const payloads: ChatMessage[][] = []
+    const provider: LLMProvider = {
+      async *chat(messages) {
+        payloads.push(messages)
+        yield 'ok'
+      }
+    }
+    const controller = createController({
+      createProvider: () => provider
+    })
+
+    controller.restore([
+      { role: 'user', content: 'remembered' },
+      { role: 'assistant', content: 'reply' }
+    ])
+    await controller.send('req-next', 'next')
+
+    expect(payloads[0]).toEqual([
+      { role: 'system', content: profileForCharacter('mutsumi').systemPrompt },
+      { role: 'user', content: 'remembered' },
+      { role: 'assistant', content: 'reply' },
+      { role: 'user', content: 'next' }
+    ])
+  })
+
   it('switches voices through the configured character mapping', async () => {
     const appliedVoices: VoiceId[] = []
     const changedCharacters: CharacterId[] = []

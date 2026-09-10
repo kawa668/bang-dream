@@ -95,6 +95,11 @@ export class TTSManager {
     }
   }
 
+  trackModel(modelId: OutfitId): void {
+    this.modelId = modelId
+    this.emitState()
+  }
+
   setVoice(voiceId: VoiceId, requestId?: string): void {
     if (!isVoiceId(voiceId) || this.selectedVoice === voiceId) return
     this.selectedVoice = voiceId

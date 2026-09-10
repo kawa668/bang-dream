@@ -1,4 +1,4 @@
-import type { AppConfig } from '../../shared/chat'
+import type { AppConfig, ChatMessage } from '../../shared/chat'
 import {
   characterForModel,
   characterForVoice,
@@ -25,6 +25,13 @@ export interface ChatSessionControllerOptions {
   onError: (requestId: string, message: string) => void
 }
 
+export class ChatSessionUpdateError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'ChatSessionUpdateError'
+  }
+}
+
 interface ChatSession {
   chat: ChatManager
 }
@@ -44,23 +51,24 @@ export class ChatSessionController {
     return this.config.currentCharacter
   }
 
-  async switchTo(characterId: CharacterId, requestId: string): Promise<void> {
-    if (this.disposed || characterId === this.config.currentCharacter) return
+  async switchTo(characterId: CharacterId, requestId: string): Promise<boolean> {
+    if (this.disposed) return false
+    if (characterId === this.config.currentCharacter) return true
 
     const nextConfig = this.options.applyCharacter(this.config, characterId)
-    await this.replaceSession(nextConfig, requestId, true)
+    return this.replaceSession(nextConfig, requestId, true)
   }
 
-  async switchToVoice(voiceId: VoiceId, requestId: string): Promise<void> {
-    await this.switchTo(characterForVoice(voiceId), requestId)
+  async switchToVoice(voiceId: VoiceId, requestId: string): Promise<boolean> {
+    return this.switchTo(characterForVoice(voiceId), requestId)
   }
 
-  async switchToModel(modelId: string, requestId: string): Promise<void> {
-    await this.switchTo(characterForModel(modelId), requestId)
+  async switchToModel(modelId: string, requestId: string): Promise<boolean> {
+    return this.switchTo(characterForModel(modelId), requestId)
   }
 
   async updateConfig(nextConfig: AppConfig, requestId: string): Promise<void> {
-    if (this.disposed) return
+    if (this.disposed) throw new ChatSessionUpdateError('聊天会话已关闭')
 
     const config = {
       ...nextConfig,
@@ -70,7 +78,32 @@ export class ChatSessionController {
         selectedVoice: this.config.voice.selectedVoice
       }
     }
-    await this.replaceSession(config, requestId, false)
+    const generation = ++this.generation
+    this.session.chat.cancel()
+    this.options.cancelVoice()
+
+    let nextSession: ChatSession
+    try {
+      nextSession = this.createSession(config, generation)
+    } catch (error) {
+      throw new ChatSessionUpdateError(errorMessage(error))
+    }
+
+    try {
+      await this.options.persist(config)
+    } catch (error) {
+      throw new ChatSessionUpdateError(errorMessage(error))
+    }
+
+    if (this.disposed || generation !== this.generation) return
+
+    this.config = config
+    this.session = nextSession
+  }
+
+  restore(messages: ChatMessage[]): void {
+    if (this.disposed) return
+    this.session.chat.restoreConversation(messages)
   }
 
   async send(requestId: string, text: string): Promise<void> {
@@ -105,7 +138,7 @@ export class ChatSessionController {
     nextConfig: AppConfig,
     requestId: string,
     characterChanged: boolean
-  ): Promise<void> {
+  ): Promise<boolean> {
     const generation = ++this.generation
     this.session.chat.cancel()
     this.options.cancelVoice()
@@ -117,7 +150,7 @@ export class ChatSessionController {
       if (generation === this.generation) {
         this.options.onError(requestId, errorMessage(error))
       }
-      return
+      return false
     }
 
     try {
@@ -126,28 +159,29 @@ export class ChatSessionController {
       if (generation === this.generation) {
         this.options.onError(requestId, errorMessage(error))
       }
-      return
+      return false
     }
 
-    if (this.disposed || generation !== this.generation) return
+    if (this.disposed || generation !== this.generation) return false
 
     this.config = nextConfig
     this.session = nextSession
 
-    if (!characterChanged) return
+    if (!characterChanged) return true
 
     this.options.applyVoice(nextConfig.voice.selectedVoice)
     try {
       await this.options.clearMemory()
     } catch (error) {
       this.options.onError(requestId, errorMessage(error))
-      return
+      return false
     }
 
-    if (this.disposed || generation !== this.generation) return
+    if (this.disposed || generation !== this.generation) return false
 
     this.options.onClear(requestId)
     this.options.onCharacterChanged(profileForCharacter(nextConfig.currentCharacter))
+    return true
   }
 
   private createSession(config: AppConfig, generation: number): ChatSession {

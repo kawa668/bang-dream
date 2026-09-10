@@ -201,9 +201,7 @@ app.whenReady().then(async () => {
   memoryStore = store
   chatSessionController = new ChatSessionController({
     config: loadedConfig,
-    applyCharacter: (_config, characterId) => {
-      return service.applyCharacter(appConfig ?? loadedConfig, characterId)
-    },
+    applyCharacter: (config, characterId) => service.applyCharacter(config, characterId),
     persist: async (config) => {
       await service.save(config)
       appConfig = config
@@ -236,6 +234,10 @@ app.whenReady().then(async () => {
       controlWindow?.webContents.send('chat:error', { requestId, message })
     }
   })
+  const past = await store.load()
+  if (past.length > 0) {
+    chatSessionController.restore(past.map(({ role, content }) => ({ role, content })))
+  }
 
   createOutputWindow()
   createControlWindow()
@@ -251,7 +253,11 @@ app.whenReady().then(async () => {
   ipcMain.on('model:changed', (_event, id: string) => {
     currentModelId = id
     controlWindow?.webContents.send('model:switch', id)
-    void chatSessionController?.switchToModel(id, createRequestId('model-change'))
+    void chatSessionController
+      ?.switchToModel(id, createRequestId('model-change'))
+      .then((switched) => {
+        if (switched) voiceManager?.trackModel(id)
+      })
   })
 
   ipcMain.on('model:switch-request', (_event, id: string) => {
