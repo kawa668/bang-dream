@@ -6,6 +6,10 @@ import type { VoiceId } from '../shared/voice'
 import { CHARACTER_PROFILES } from '../shared/characterProfiles'
 import type { CharacterId } from '../shared/characterProfiles'
 
+const LEGACY_MODEL_IDS: Record<string, string> = {
+  'deepseek v4flash': 'deepseek-v4-flash'
+}
+
 export interface SecretStore {
   isAvailable(): boolean
   encrypt(plain: string): string
@@ -16,7 +20,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   llm: {
     baseUrl: '',
     apiKeyEncrypted: '',
-    model: 'deepseek v4flash',
+    model: 'deepseek-v4-flash',
     systemPrompt: '你是若叶睦，说话温柔克制，用中文简短回复。',
     temperature: 0.8,
     timeoutMs: 30000,
@@ -77,21 +81,57 @@ function normalizeCharacters(
   value?: Partial<Record<CharacterId, { systemPrompt?: string; model?: string }>>
 ): Record<CharacterId, { systemPrompt?: string; model?: string }> {
   return {
-    mutsumi: value?.mutsumi ?? {},
-    anon: value?.anon ?? {},
-    sakiko: value?.sakiko ?? {}
+    mutsumi: normalizeCharacterOverride(value?.mutsumi),
+    anon: normalizeCharacterOverride(value?.anon),
+    sakiko: normalizeCharacterOverride(value?.sakiko)
   }
 }
 
 function mergeDefaults(value: Partial<AppConfig> | undefined): AppConfig {
-  return {
-    llm: { ...cloneDefaults().llm, ...value?.llm },
-    voice: normalizeVoice(value?.voice),
-    currentCharacter: isCharacterId(value?.currentCharacter)
-      ? value.currentCharacter
-      : DEFAULT_CONFIG.currentCharacter,
-    characters: normalizeCharacters(value?.characters)
+  const defaults = cloneDefaults()
+  const currentCharacter = isCharacterId(value?.currentCharacter)
+    ? value.currentCharacter
+    : DEFAULT_CONFIG.currentCharacter
+  const characters = normalizeCharacters(value?.characters)
+  const legacyModel = normalizeModelId(value?.llm?.model)
+  const llm = {
+    ...defaults.llm,
+    ...value?.llm,
+    ...(legacyModel ? { model: legacyModel } : {})
   }
+  const currentOverride = characters[currentCharacter]
+
+  if (legacyModel && !currentOverride.model?.trim()) {
+    currentOverride.model = legacyModel
+  }
+  if (typeof value?.llm?.systemPrompt === 'string'
+    && value.llm.systemPrompt.trim()
+    && !currentOverride.systemPrompt?.trim()) {
+    currentOverride.systemPrompt = value.llm.systemPrompt
+  }
+
+  return {
+    llm,
+    voice: normalizeVoice(value?.voice),
+    currentCharacter,
+    characters
+  }
+}
+
+function normalizeCharacterOverride(
+  value?: { systemPrompt?: string; model?: string }
+): { systemPrompt?: string; model?: string } {
+  if (!value) return {}
+  const model = normalizeModelId(value.model)
+  return {
+    ...value,
+    ...(model ? { model } : {})
+  }
+}
+
+function normalizeModelId(model?: string): string | undefined {
+  if (!model) return model
+  return LEGACY_MODEL_IDS[model] ?? model
 }
 
 export class ConfigService {

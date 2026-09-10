@@ -16,4 +16,9 @@ describe('characterProfiles', () => {
     expect(profileForModel('037_casual-2023').defaultVoice).toBe('千早爱音')
     expect(profileForModel('casual').defaultVoice).toBe('若叶睦')
   })
+
+  it('uses the supported default model id', () => {
+    expect(profileForModel('casual').model).toBe('deepseek-v4-flash')
+    expect(profileForModel('341_casual').model).toBe('deepseek-v4-flash')
+  })
 })

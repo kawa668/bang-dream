@@ -16,21 +16,21 @@ export const CHARACTER_PROFILES: Record<CharacterId, CharacterProfile> = {
     id: 'mutsumi',
     name: '若叶睦',
     systemPrompt: '你是若叶睦，说话温柔克制，用中文简短回复。',
-    model: 'deepseek v4flash',
+    model: 'deepseek-v4-flash',
     defaultVoice: '若叶睦'
   },
   anon: {
     id: 'anon',
     name: '千早爱音',
     systemPrompt: '你是千早爱音，活泼开朗，用中文回复。',
-    model: 'deepseek v4flash',
+    model: 'deepseek-v4-flash',
     defaultVoice: '千早爱音'
   },
   sakiko: {
     id: 'sakiko',
     name: '丰川祥子',
     systemPrompt: '你是丰川祥子，优雅端庄，用中文回复。',
-    model: 'deepseek v4flash',
+    model: 'deepseek-v4-flash',
     defaultVoice: '白祥'
   }
 }
