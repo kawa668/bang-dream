@@ -121,6 +121,18 @@ function mergeDefaults(value: LegacyConfig | undefined): AppConfig {
   }
 }
 
+function needsMigration(value: LegacyConfig): boolean {
+  const voice = normalizeVoice(value.voice)
+  const currentCharacter = characterForVoice(voice.selectedVoice)
+  return Object.prototype.hasOwnProperty.call(value, 'characters')
+    || Object.prototype.hasOwnProperty.call(value.llm ?? {}, 'systemPrompt')
+    || Object.prototype.hasOwnProperty.call(value.voice ?? {}, 'defaultVoice')
+    || normalizeSessionId(value.llm?.sessionId) === undefined
+    || (typeof value.llm?.model === 'string'
+      && normalizeModelId(value.llm.model) !== value.llm.model)
+    || value.currentCharacter !== currentCharacter
+}
+
 function normalizeNumber(value: unknown, fallback: number): number {
   return typeof value === 'number' && Number.isFinite(value) ? value : fallback
 }
@@ -150,7 +162,10 @@ export class ConfigService {
   async load(): Promise<AppConfig> {
     try {
       const raw = await readFile(this.filePath, 'utf8')
-      return mergeDefaults(JSON.parse(raw) as LegacyConfig)
+      const value = JSON.parse(raw) as LegacyConfig
+      const config = mergeDefaults(value)
+      if (needsMigration(value)) await this.save(config)
+      return config
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') return cloneDefaults()
       throw error

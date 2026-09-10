@@ -156,6 +156,68 @@ describe('ConfigService', () => {
     expect(config).not.toHaveProperty('characters')
   })
 
+  it('persists a migrated legacy config without legacy fields', async () => {
+    const filePath = join(dir, 'config.json')
+    await writeFile(filePath, JSON.stringify({
+      llm: {
+        model: 'deepseek v4flash',
+        systemPrompt: 'legacy prompt',
+        sessionId: 'ses_092cf255-41ec-4605-bd6b-70ae3f482362'
+      },
+      voice: { selectedVoice: '黑祥' },
+      currentCharacter: 'sakiko',
+      characters: {
+        sakiko: { model: 'custom-model', systemPrompt: 'legacy override' }
+      }
+    }), 'utf8')
+    const service = new ConfigService(filePath, new FakeSecretStore())
+
+    await service.load()
+
+    const persisted = JSON.parse(await readFile(filePath, 'utf8'))
+    expect(persisted.currentCharacter).toBe('sakiko-black')
+    expect(persisted.llm.model).toBe('custom-model')
+    expect(persisted.llm.sessionId).toBe('ses_092cf255-41ec-4605-bd6b-70ae3f482362')
+    expect(persisted.llm).not.toHaveProperty('systemPrompt')
+    expect(persisted).not.toHaveProperty('characters')
+  })
+
+  it('does not rewrite a normalized config on load', async () => {
+    const filePath = join(dir, 'config.json')
+    const normalized = {
+      llm: {
+        baseUrl: '',
+        apiKeyEncrypted: '',
+        sessionId: 'ses_092cf255-41ec-4605-bd6b-70ae3f482362',
+        model: 'deepseek-v4-flash',
+        temperature: 0.8,
+        timeoutMs: 30000,
+        maxHistory: 20
+      },
+      voice: {
+        enabled: false,
+        selectedVoice: '若叶睦',
+        ttsEndpoint: 'http://127.0.0.1:9880',
+        sttEndpoint: 'http://127.0.0.1:9881',
+        whisperModel: 'large-v3-turbo',
+        sttPrecision: 'auto',
+        sttTimeoutMs: 600000,
+        gptSovitsDir: 'D:\\GPT-SOVITS',
+        trainingAudioDir: 'D:\\AGENT\\live\\训练音频',
+        startupTimeoutMs: 300000,
+        voiceConversationEnabled: false
+      },
+      currentCharacter: 'mutsumi'
+    }
+    const before = JSON.stringify(normalized)
+    await writeFile(filePath, before, 'utf8')
+    const service = new ConfigService(filePath, new FakeSecretStore())
+
+    await service.load()
+
+    expect(await readFile(filePath, 'utf8')).toBe(before)
+  })
+
   it('migrates the legacy model id to the supported id', async () => {
     await writeFile(join(dir, 'config.json'), JSON.stringify({
       llm: {
