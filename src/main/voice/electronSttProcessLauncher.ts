@@ -11,6 +11,8 @@ export class ElectronSttProcessLauncher implements SttProcessLauncher {
     scriptPath: string
   }): GptSoVITSProcess {
     const pythonPath = join(options.gptSovitsDir, 'runtime', 'python.exe')
+    let exited = false
+    let stderr = ''
     const child = spawn(pythonPath, [
       options.scriptPath,
       '--gpt-sovits-dir', options.gptSovitsDir,
@@ -21,12 +23,24 @@ export class ElectronSttProcessLauncher implements SttProcessLauncher {
     ], {
       cwd: options.gptSovitsDir,
       windowsHide: true,
-      stdio: 'ignore'
+      stdio: ['ignore', 'ignore', 'pipe']
+    })
+    child.once('exit', () => {
+      exited = true
+    })
+    child.once('error', (error) => {
+      exited = true
+      stderr = error.message
+    })
+    child.stderr?.on('data', (chunk: Buffer) => {
+      stderr = `${stderr}${chunk.toString()}`.slice(-4000)
     })
     return {
       kill: () => {
         if (!child.killed) child.kill()
-      }
+      },
+      hasExited: () => exited,
+      errorOutput: () => stderr.trim()
     }
   }
 }

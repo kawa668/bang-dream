@@ -9,21 +9,41 @@ from faster_whisper import WhisperModel
 from fastapi.responses import JSONResponse
 
 
+def required_model_files(model_size: str) -> tuple[str, ...]:
+    files = ["config.json", "model.bin", "tokenizer.json"]
+    if "large-v3" in model_size or "distil" in model_size:
+        files.append("vocabulary.json")
+    return tuple(files)
+
+
+def is_model_complete(model_path: str, model_size: str) -> bool:
+    return all(
+        os.path.isfile(os.path.join(model_path, file_name))
+        for file_name in required_model_files(model_size)
+    )
+
+
 def resolve_model_dir(gpt_sovits_dir: str, model_size: str) -> str:
     """返回本地模型目录；不存在时复用 GPT-SoVITS 的 download_model 下载。"""
     model_path = os.path.join(
         gpt_sovits_dir, "tools", "asr", "models", f"faster-whisper-{model_size}"
     )
-    if os.path.isdir(model_path):
+    if is_model_complete(model_path, model_size):
         return model_path
+
     # 仅需要下载时才引入 tools.asr，避免模型已缓存时启动被 FunASR 拖慢。
     sys.path.insert(0, gpt_sovits_dir)
     from tools.asr.fasterwhisper_asr import download_model
 
     download_model(model_size)
-    return os.path.join(
-        gpt_sovits_dir, "tools", "asr", "models", f"faster-whisper-{model_size}"
-    )
+    if not is_model_complete(model_path, model_size):
+        missing = [
+            file_name
+            for file_name in required_model_files(model_size)
+            if not os.path.isfile(os.path.join(model_path, file_name))
+        ]
+        raise RuntimeError(f"语音识别模型下载不完整，缺少：{', '.join(missing)}")
+    return model_path
 
 
 app = FastAPI()

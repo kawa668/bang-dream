@@ -86,6 +86,10 @@ export class STTManager {
       const deadline = Date.now() + this.config.timeoutMs
       while (Date.now() < deadline) {
         await this.sleep(this.pollIntervalMs)
+        if (this.process.hasExited?.()) {
+          const details = this.process.errorOutput?.().trim()
+          throw new Error(`语音识别服务启动失败${details ? `：${details}` : ''}`)
+        }
         if (await this.config.provider.probeReady()) return
       }
       throw new Error('语音识别服务启动超时，请检查模型与运行环境')

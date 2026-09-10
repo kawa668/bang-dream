@@ -18,6 +18,8 @@ export interface TextToSpeechProvider {
 
 export interface GptSoVITSProcess {
   kill(): void
+  hasExited?(): boolean
+  errorOutput?(): string
 }
 
 export interface VoiceProcessLauncher {

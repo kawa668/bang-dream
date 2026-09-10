@@ -33,24 +33,36 @@ class FakeProvider implements SpeechToTextProvider {
 class FakeLauncher implements SttProcessLauncher {
   launchCalls = 0
   processes: FakeProcess[] = []
+  onLaunch: ((process: FakeProcess) => void) | null = null
 
   launch(): GptSoVITSProcess {
     this.launchCalls += 1
     const process = new FakeProcess()
     this.processes.push(process)
+    this.onLaunch?.(process)
     return process
   }
 }
 
 class FakeProcess {
   killed = false
+  exited = false
+  stderr = ''
 
   kill(): void {
     this.killed = true
   }
+
+  hasExited(): boolean {
+    return this.exited
+  }
+
+  errorOutput(): string {
+    return this.stderr
+  }
 }
 
-function createManager(provider: FakeProvider, launcher: FakeLauncher) {
+function createManager(provider: FakeProvider, launcher: FakeLauncher, timeoutMs = 2000) {
   const states: SttStateMessage[] = []
   const results: Array<{ requestId: string; text: string }> = []
   const manager = new STTManager({
@@ -58,7 +70,7 @@ function createManager(provider: FakeProvider, launcher: FakeLauncher) {
     gptSovitsDir: 'D:/gpt',
     model: 'large-v3-turbo',
     precision: 'auto',
-    timeoutMs: 2000,
+    timeoutMs,
     scriptPath: 'D:/app/scripts/asr_api.py',
     launcher,
     provider,
@@ -105,6 +117,26 @@ describe('STTManager', () => {
     const last = states.at(-1)
     expect(last?.state.runtimeState).toBe('error')
     expect(last?.state.message).toContain('stt down')
+  })
+
+  it('reports a process startup error without waiting for the timeout', async () => {
+    const provider = new FakeProvider()
+    provider.probeResults = [false]
+    const launcher = new FakeLauncher()
+    launcher.onLaunch = (process) => {
+      process.exited = true
+      process.stderr = "RuntimeError: Unable to open file 'model.bin'"
+    }
+    const { manager, states } = createManager(provider, launcher, 50)
+
+    await manager.transcribe(new Uint8Array([1]), 'req-error')
+
+    const last = states.at(-1)
+    expect(last?.state.runtimeState).toBe('error')
+    expect(last?.state.message).toBe(
+      "语音识别服务启动失败：RuntimeError: Unable to open file 'model.bin'"
+    )
+    expect(provider.probeCalls).toBe(1)
   })
 
   it('dispose kills the managed process', async () => {
