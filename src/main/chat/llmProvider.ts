@@ -10,16 +10,30 @@ export interface LLMProviderOptions {
 }
 
 export interface LLMProvider {
-  chat(messages: ChatMessage[]): AsyncIterable<string>
+  chat(messages: ChatMessage[], signal?: AbortSignal): AsyncIterable<string>
+}
+
+export class LLMRequestCancelledError extends Error {
+  constructor() {
+    super('LLM request cancelled')
+    this.name = 'LLMRequestCancelledError'
+  }
 }
 
 export class OpenAICompatibleProvider implements LLMProvider {
   constructor(private readonly options: LLMProviderOptions) {}
 
-  async *chat(messages: ChatMessage[]): AsyncIterable<string> {
+  async *chat(messages: ChatMessage[], externalSignal?: AbortSignal): AsyncIterable<string> {
     const url = `${this.options.baseUrl.replace(/\/+$/, '')}/chat/completions`
     const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(), this.options.timeoutMs)
+    let timedOut = false
+    const timer = setTimeout(() => {
+      timedOut = true
+      controller.abort()
+    }, this.options.timeoutMs)
+    const cancel = (): void => controller.abort()
+    if (externalSignal?.aborted) cancel()
+    else externalSignal?.addEventListener('abort', cancel, { once: true })
 
     try {
       const response = await fetch(url, {
@@ -94,11 +108,15 @@ export class OpenAICompatibleProvider implements LLMProvider {
       }
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
-        throw new Error(`LLM request timed out after ${this.options.timeoutMs}ms`)
+        if (timedOut) {
+          throw new Error(`LLM request timed out after ${this.options.timeoutMs}ms`)
+        }
+        if (externalSignal?.aborted) throw new LLMRequestCancelledError()
       }
       throw error
     } finally {
       clearTimeout(timer)
+      externalSignal?.removeEventListener('abort', cancel)
     }
   }
 }

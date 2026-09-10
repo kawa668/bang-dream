@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { OpenAICompatibleProvider } from '../../src/main/chat/llmProvider'
+import {
+  LLMRequestCancelledError,
+  OpenAICompatibleProvider
+} from '../../src/main/chat/llmProvider'
 import type { ChatMessage } from '../../src/shared/chat'
 
 function streamResponse(chunks: string[]): Response {
@@ -121,5 +124,37 @@ describe('OpenAICompatibleProvider', () => {
         // consume stream
       }
     }).rejects.toThrow(/timed out/)
+  })
+
+  it('cancels an in-flight request without reporting a timeout', async () => {
+    const controller = new AbortController()
+    let requestSignal!: AbortSignal
+    vi.stubGlobal('fetch', vi.fn((_url: string, init: RequestInit) => {
+      requestSignal = init.signal as AbortSignal
+      return new Promise((_resolve, reject) => {
+        requestSignal.addEventListener('abort', () => {
+          const error = new Error('aborted')
+          error.name = 'AbortError'
+          reject(error)
+        })
+      })
+    }))
+    const provider = new OpenAICompatibleProvider({
+      baseUrl: 'https://relay.example.com',
+      apiKey: 'secret',
+      sessionId: 'ses_test-session',
+      model: 'deepseek-v4-flash',
+      temperature: 0.8,
+      timeoutMs: 5000
+    })
+
+    const run = async () => {
+      for await (const _chunk of provider.chat([], controller.signal)) {
+        // consume
+      }
+    }
+    const pending = expect(run()).rejects.toBeInstanceOf(LLMRequestCancelledError)
+    controller.abort()
+    await pending
   })
 })

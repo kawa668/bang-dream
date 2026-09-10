@@ -16,6 +16,7 @@ export interface TTSManagerOptions {
   }) => void
   onState: (message: VoiceStateMessage) => void
   play: (requestId: string, audio: Uint8Array) => Promise<void>
+  stopPlayback: () => void
   pollIntervalMs?: number
 }
 
@@ -27,6 +28,7 @@ export class TTSManager {
   private readonly persist: TTSManagerOptions['persist']
   private readonly onState: TTSManagerOptions['onState']
   private readonly play: TTSManagerOptions['play']
+  private readonly stopPlayback: TTSManagerOptions['stopPlayback']
   private readonly pollIntervalMs: number
 
   private enabled: boolean
@@ -40,6 +42,7 @@ export class TTSManager {
   private loadedVoice: VoiceId | null = null
   private voiceLoadPromise: Promise<void> | null = null
   private speechTail: Promise<void> = Promise.resolve()
+  private speechGeneration = 0
   private disposed = false
 
   constructor(options: TTSManagerOptions) {
@@ -50,6 +53,7 @@ export class TTSManager {
     this.persist = options.persist
     this.onState = options.onState
     this.play = options.play
+    this.stopPlayback = options.stopPlayback
     this.pollIntervalMs = options.pollIntervalMs ?? 2000
     this.enabled = options.voiceConfig.enabled
     this.selectedVoice = options.voiceConfig.selectedVoice
@@ -122,24 +126,36 @@ export class TTSManager {
   }
 
   speak(text: string, requestId: string): Promise<void> {
+    const generation = this.speechGeneration
     const task = this.speechTail.then(async () => {
-      if (!this.enabled || this.disposed) return
+      if (!this.enabled || this.disposed || generation !== this.speechGeneration) return
       await this.ensureStarted(requestId)
+      if (generation !== this.speechGeneration) return
       await this.ensureVoiceLoaded(this.selectedVoice, requestId)
+      if (generation !== this.speechGeneration) return
       const profile = this.catalog[this.selectedVoice]
       this.setRuntimeState('synthesizing', requestId)
       const audio = await this.provider.synthesize(profile, text)
+      if (generation !== this.speechGeneration) return
       this.setRuntimeState('playing', requestId)
       await this.play(requestId, audio)
+      if (generation !== this.speechGeneration) return
       this.setRuntimeState('idle', requestId)
     })
     const wrapped = task.catch((error) => {
-      if (!this.disposed) {
+      if (!this.disposed && generation === this.speechGeneration) {
         this.setRuntimeState('error', requestId, errorText(error))
       }
     })
     this.speechTail = wrapped
     return wrapped
+  }
+
+  cancelSpeech(): void {
+    this.speechGeneration += 1
+    this.speechTail = Promise.resolve()
+    this.stopPlayback()
+    this.setRuntimeState(this.enabled ? 'idle' : 'off')
   }
 
   async dispose(): Promise<void> {

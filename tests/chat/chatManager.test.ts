@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { ChatManager } from '../../src/main/chat/chatManager'
 import { ConversationManager } from '../../src/main/chat/conversationManager'
-import type { LLMProvider } from '../../src/main/chat/llmProvider'
+import {
+  LLMRequestCancelledError,
+  type LLMProvider
+} from '../../src/main/chat/llmProvider'
 import type { ChatMessage } from '../../src/shared/chat'
 
 function fakeProvider(handler: () => AsyncIterable<string>): LLMProvider {
@@ -98,5 +101,28 @@ describe('ChatManager', () => {
       'first',
       'ok'
     ])
+  })
+
+  it('cancels the active provider call without emitting an error', async () => {
+    const conversation = new ConversationManager(10, 'sys')
+    const events: unknown[] = []
+    const provider: LLMProvider = {
+      async *chat(_messages, signal) {
+        await new Promise<void>((resolve, reject) => {
+          signal?.addEventListener('abort', () => reject(new LLMRequestCancelledError()), {
+            once: true
+          })
+          setTimeout(resolve, 1000)
+        })
+        yield 'late'
+      }
+    }
+    const chat = new ChatManager(conversation, provider, (event) => events.push(event))
+
+    const pending = chat.sendUserMessage('req-1', 'hello')
+    chat.cancel()
+    await pending
+
+    expect(events).toEqual([{ type: 'start', requestId: 'req-1' }])
   })
 })

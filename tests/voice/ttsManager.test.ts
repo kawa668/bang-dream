@@ -72,7 +72,12 @@ class FakeProcess {
   }
 }
 
-function createManager(provider: FakeProvider, launcher: FakeLauncher, config = voiceConfig) {
+function createManager(
+  provider: FakeProvider,
+  launcher: FakeLauncher,
+  config = voiceConfig,
+  stopPlayback = () => {}
+) {
   const states: VoiceStateMessage[] = []
   const persisted: Array<{
     enabled?: boolean
@@ -90,6 +95,7 @@ function createManager(provider: FakeProvider, launcher: FakeLauncher, config = 
     play: async (requestId) => {
       played.push(requestId)
     },
+    stopPlayback,
     pollIntervalMs: 1
   })
   return { manager, states, persisted, played }
@@ -174,5 +180,19 @@ describe('TTSManager', () => {
 
     expect(manager.stateMessage().state.voiceConversationEnabled).toBe(true)
     expect(persisted.at(-1)).toMatchObject({ voiceConversationEnabled: true })
+  })
+
+  it('cancels playback without entering the error state', () => {
+    const provider = new FakeProvider()
+    const launcher = new FakeLauncher()
+    let stopCalls = 0
+    const { manager, states } = createManager(provider, launcher, voiceConfig, () => {
+      stopCalls += 1
+    })
+
+    manager.cancelSpeech()
+
+    expect(stopCalls).toBe(1)
+    expect(states.at(-1)?.state.runtimeState).toBe('off')
   })
 })

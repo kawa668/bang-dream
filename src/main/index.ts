@@ -177,7 +177,8 @@ function setupVoiceSystem(): void {
     onState: (message: VoiceStateMessage) => {
       controlWindow?.webContents.send('voice:state', message)
     },
-    play: (requestId, audio) => player.enqueue(requestId, audio)
+    play: (requestId, audio) => player.enqueue(requestId, audio),
+    stopPlayback: () => player.stopAll()
   })
 }
 
