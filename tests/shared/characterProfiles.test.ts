@@ -1,24 +1,38 @@
 import { describe, expect, it } from 'vitest'
 import {
+  CHARACTER_PROFILES,
   characterForModel,
-  profileForModel
+  characterForVoice,
+  profileForCharacter
 } from '../../src/shared/characterProfiles'
 
 describe('characterProfiles', () => {
-  it('maps model prefixes to characters', () => {
-    expect(characterForModel('341_casual')).toBe('sakiko')
-    expect(characterForModel('037_casual-2023')).toBe('anon')
+  it('defines all five fixed character identities', () => {
+    expect(Object.keys(CHARACTER_PROFILES)).toEqual([
+      'mutsumi',
+      'anon',
+      'sakiko-white',
+      'sakiko-black',
+      'mortis'
+    ])
+  })
+
+  it('maps voices and models to the correct character', () => {
+    expect(characterForVoice('若叶睦')).toBe('mutsumi')
+    expect(characterForVoice('千早爱音')).toBe('anon')
+    expect(characterForVoice('白祥')).toBe('sakiko-white')
+    expect(characterForVoice('黑祥')).toBe('sakiko-black')
+    expect(characterForVoice('墨提斯')).toBe('mortis')
+    expect(characterForModel('037_casual')).toBe('anon')
+    expect(characterForModel('341_casual')).toBe('sakiko-white')
     expect(characterForModel('casual')).toBe('mutsumi')
   })
 
-  it('returns the profile defaults per character', () => {
-    expect(profileForModel('341_casual').name).toBe('丰川祥子')
-    expect(profileForModel('037_casual-2023').defaultVoice).toBe('千早爱音')
-    expect(profileForModel('casual').defaultVoice).toBe('若叶睦')
-  })
-
-  it('uses the supported default model id', () => {
-    expect(profileForModel('casual').model).toBe('deepseek-v4-flash')
-    expect(profileForModel('341_casual').model).toBe('deepseek-v4-flash')
+  it('returns the fixed profile for a character', () => {
+    expect(profileForCharacter('sakiko-black')).toMatchObject({
+      id: 'sakiko-black',
+      name: '黑祥',
+      defaultVoice: '黑祥'
+    })
   })
 })

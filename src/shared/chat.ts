@@ -13,7 +13,6 @@ export interface LLMConfig {
   apiKeyEncrypted: string
   sessionId: string
   model: string
-  systemPrompt: string
   temperature: number
   timeoutMs: number
   maxHistory: number
@@ -37,13 +36,13 @@ export interface AppConfig {
   llm: LLMConfig
   voice: VoiceConfig
   currentCharacter: CharacterId
-  characters: Record<CharacterId, { systemPrompt?: string; model?: string }>
 }
 
 export interface LLMSettingsView {
   baseUrl: string
   model: string
-  systemPrompt: string
+  characterId: CharacterId
+  characterName: string
   temperature: number
   timeoutMs: number
   maxHistory: number
@@ -54,7 +53,6 @@ export interface LLMSettingsSave {
   baseUrl: string
   apiKey: string
   model: string
-  systemPrompt: string
   temperature: number
   timeoutMs: number
   maxHistory: number

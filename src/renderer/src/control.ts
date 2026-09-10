@@ -19,7 +19,7 @@ const chatStatus = document.querySelector<HTMLParagraphElement>('#chat-status')
 const baseUrlInput = document.querySelector<HTMLInputElement>('#llm-base-url')
 const apiKeyInput = document.querySelector<HTMLInputElement>('#llm-api-key')
 const modelInput = document.querySelector<HTMLInputElement>('#llm-model')
-const systemPromptInput = document.querySelector<HTMLTextAreaElement>('#llm-system-prompt')
+const currentCharacterLabel = document.querySelector<HTMLParagraphElement>('#llm-current-character')
 const temperatureInput = document.querySelector<HTMLInputElement>('#llm-temperature')
 const timeoutInput = document.querySelector<HTMLInputElement>('#llm-timeout')
 const maxHistoryInput = document.querySelector<HTMLInputElement>('#llm-max-history')
@@ -181,7 +181,9 @@ async function loadConfig(): Promise<void> {
     if (!view) return
     if (baseUrlInput) baseUrlInput.value = view.baseUrl
     if (modelInput) modelInput.value = view.model
-    if (systemPromptInput) systemPromptInput.value = view.systemPrompt
+    if (currentCharacterLabel) {
+      currentCharacterLabel.textContent = `当前角色：${view.characterName}`
+    }
     if (temperatureInput) temperatureInput.value = String(view.temperature)
     if (timeoutInput) timeoutInput.value = String(view.timeoutMs)
     if (maxHistoryInput) maxHistoryInput.value = String(view.maxHistory)
@@ -199,7 +201,6 @@ async function saveConfig(): Promise<void> {
     baseUrl: baseUrlInput?.value ?? '',
     apiKey: apiKeyInput?.value ?? '',
     model: modelInput?.value ?? '',
-    systemPrompt: systemPromptInput?.value ?? '',
     temperature: Number(temperatureInput?.value ?? 0.8),
     timeoutMs: Number(timeoutInput?.value ?? 30000),
     maxHistory: Number(maxHistoryInput?.value ?? 20)

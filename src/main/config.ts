@@ -1,14 +1,30 @@
 import { randomUUID } from 'node:crypto'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
-import type { AppConfig, LLMSettingsSave, LLMSettingsView, VoiceConfig } from '../shared/chat'
+import type {
+  AppConfig,
+  LLMConfig,
+  LLMSettingsSave,
+  LLMSettingsView,
+  VoiceConfig
+} from '../shared/chat'
 import { isVoiceId } from '../shared/voice'
 import type { VoiceId } from '../shared/voice'
-import { CHARACTER_PROFILES } from '../shared/characterProfiles'
+import {
+  DEFAULT_VOICE_FOR_CHARACTER,
+  characterForVoice,
+  profileForCharacter
+} from '../shared/characterProfiles'
 import type { CharacterId } from '../shared/characterProfiles'
 
 const LEGACY_MODEL_IDS: Record<string, string> = {
   'deepseek v4flash': 'deepseek-v4-flash'
+}
+
+type LegacyConfig = Partial<AppConfig> & {
+  currentCharacter?: string
+  llm?: Partial<LLMConfig> & { systemPrompt?: string }
+  characters?: Record<string, { model?: string; systemPrompt?: string }>
 }
 
 export interface SecretStore {
@@ -23,7 +39,6 @@ export const DEFAULT_CONFIG: AppConfig = {
     apiKeyEncrypted: '',
     sessionId: '',
     model: 'deepseek-v4-flash',
-    systemPrompt: '你是若叶睦，说话温柔克制，用中文简短回复。',
     temperature: 0.8,
     timeoutMs: 30000,
     maxHistory: 20
@@ -41,14 +56,12 @@ export const DEFAULT_CONFIG: AppConfig = {
     startupTimeoutMs: 300000,
     voiceConversationEnabled: false
   },
-  currentCharacter: 'mutsumi',
-  characters: { mutsumi: {}, anon: {}, sakiko: {} }
+  currentCharacter: 'mutsumi'
 }
 
 function cloneDefaults(): AppConfig {
   const base = JSON.parse(JSON.stringify(DEFAULT_CONFIG)) as AppConfig
   base.llm.sessionId = createSessionId()
-  base.characters = normalizeCharacters(base.characters)
   return base
 }
 
@@ -66,77 +79,56 @@ function normalizeVoice(
     sttEndpoint: source.sttEndpoint?.trim() || DEFAULT_CONFIG.voice.sttEndpoint,
     whisperModel: source.whisperModel?.trim() || DEFAULT_CONFIG.voice.whisperModel,
     sttPrecision: source.sttPrecision?.trim() || DEFAULT_CONFIG.voice.sttPrecision,
-    sttTimeoutMs: Number.isFinite(source.sttTimeoutMs)
-      ? source.sttTimeoutMs!
-      : DEFAULT_CONFIG.voice.sttTimeoutMs,
+    sttTimeoutMs: normalizeNumber(source.sttTimeoutMs, DEFAULT_CONFIG.voice.sttTimeoutMs),
     gptSovitsDir: source.gptSovitsDir?.trim() || DEFAULT_CONFIG.voice.gptSovitsDir,
     trainingAudioDir: source.trainingAudioDir?.trim() || DEFAULT_CONFIG.voice.trainingAudioDir,
-    startupTimeoutMs: Number.isFinite(source.startupTimeoutMs)
-      ? source.startupTimeoutMs!
-      : DEFAULT_CONFIG.voice.startupTimeoutMs,
+    startupTimeoutMs: normalizeNumber(
+      source.startupTimeoutMs,
+      DEFAULT_CONFIG.voice.startupTimeoutMs
+    ),
     voiceConversationEnabled: typeof source.voiceConversationEnabled === 'boolean'
       ? source.voiceConversationEnabled
       : DEFAULT_CONFIG.voice.voiceConversationEnabled
   }
 }
 
-function normalizeCharacters(
-  value?: Partial<Record<CharacterId, { systemPrompt?: string; model?: string }>>
-): Record<CharacterId, { systemPrompt?: string; model?: string }> {
-  return {
-    mutsumi: normalizeCharacterOverride(value?.mutsumi),
-    anon: normalizeCharacterOverride(value?.anon),
-    sakiko: normalizeCharacterOverride(value?.sakiko)
-  }
-}
-
-function mergeDefaults(value: Partial<AppConfig> | undefined): AppConfig {
+function mergeDefaults(value: LegacyConfig | undefined): AppConfig {
   const defaults = cloneDefaults()
-  const currentCharacter = isCharacterId(value?.currentCharacter)
-    ? value.currentCharacter
-    : DEFAULT_CONFIG.currentCharacter
-  const characters = normalizeCharacters(value?.characters)
-  const legacyModel = normalizeModelId(value?.llm?.model)
-  const sessionId = normalizeSessionId(value?.llm?.sessionId) ?? createSessionId()
-  const llm = {
-    ...defaults.llm,
-    ...value?.llm,
-    ...(legacyModel ? { model: legacyModel } : {}),
-    sessionId
-  }
-  const currentOverride = characters[currentCharacter]
-
-  if (legacyModel && !currentOverride.model?.trim()) {
-    currentOverride.model = legacyModel
-  }
-  if (typeof value?.llm?.systemPrompt === 'string'
-    && value.llm.systemPrompt.trim()
-    && !currentOverride.systemPrompt?.trim()) {
-    currentOverride.systemPrompt = value.llm.systemPrompt
-  }
+  const voice = normalizeVoice(value?.voice)
+  const currentCharacter = characterForVoice(voice.selectedVoice)
+  const legacyCurrent = value?.currentCharacter
+  const promotedModel = legacyCurrent
+    ? value?.characters?.[legacyCurrent]?.model
+    : undefined
+  const model = normalizeModelId(promotedModel ?? value?.llm?.model) ?? defaults.llm.model
 
   return {
-    llm,
-    voice: normalizeVoice(value?.voice),
-    currentCharacter,
-    characters
+    llm: {
+      baseUrl: typeof value?.llm?.baseUrl === 'string'
+        ? value.llm.baseUrl
+        : defaults.llm.baseUrl,
+      apiKeyEncrypted: typeof value?.llm?.apiKeyEncrypted === 'string'
+        ? value.llm.apiKeyEncrypted
+        : defaults.llm.apiKeyEncrypted,
+      sessionId: normalizeSessionId(value?.llm?.sessionId) ?? createSessionId(),
+      model,
+      temperature: normalizeNumber(value?.llm?.temperature, defaults.llm.temperature),
+      timeoutMs: normalizeNumber(value?.llm?.timeoutMs, defaults.llm.timeoutMs),
+      maxHistory: normalizeNumber(value?.llm?.maxHistory, defaults.llm.maxHistory)
+    },
+    voice,
+    currentCharacter
   }
 }
 
-function normalizeCharacterOverride(
-  value?: { systemPrompt?: string; model?: string }
-): { systemPrompt?: string; model?: string } {
-  if (!value) return {}
-  const model = normalizeModelId(value.model)
-  return {
-    ...value,
-    ...(model ? { model } : {})
-  }
+function normalizeNumber(value: unknown, fallback: number): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : fallback
 }
 
 function normalizeModelId(model?: string): string | undefined {
-  if (!model) return model
-  return LEGACY_MODEL_IDS[model] ?? model
+  const trimmed = model?.trim()
+  if (!trimmed) return undefined
+  return LEGACY_MODEL_IDS[trimmed] ?? trimmed
 }
 
 function normalizeSessionId(value: unknown): string | undefined {
@@ -158,7 +150,7 @@ export class ConfigService {
   async load(): Promise<AppConfig> {
     try {
       const raw = await readFile(this.filePath, 'utf8')
-      return mergeDefaults(JSON.parse(raw) as Partial<AppConfig>)
+      return mergeDefaults(JSON.parse(raw) as LegacyConfig)
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') return cloneDefaults()
       throw error
@@ -192,11 +184,12 @@ export class ConfigService {
   }
 
   toView(config: AppConfig): LLMSettingsView {
-    const profile = this.effectiveProfile(config, config.currentCharacter)
+    const profile = profileForCharacter(config.currentCharacter)
     return {
       baseUrl: config.llm.baseUrl,
-      model: profile.model,
-      systemPrompt: profile.systemPrompt,
+      model: config.llm.model,
+      characterId: profile.id,
+      characterName: profile.name,
       temperature: config.llm.temperature,
       timeoutMs: config.llm.timeoutMs,
       maxHistory: config.llm.maxHistory,
@@ -206,22 +199,12 @@ export class ConfigService {
 
   applySave(config: AppConfig, save: LLMSettingsSave): AppConfig {
     const withKey = this.setApiKey(config, save.apiKey)
-    const role = config.currentCharacter
-    const profile = CHARACTER_PROFILES[role]
-    const systemPrompt = save.systemPrompt.trim() || profile.systemPrompt
-    const model = save.model.trim() || profile.model
     return {
       ...withKey,
-      currentCharacter: role,
-      characters: {
-        ...config.characters,
-        [role]: { systemPrompt, model }
-      },
       llm: {
         ...withKey.llm,
         baseUrl: save.baseUrl.trim(),
-        model,
-        systemPrompt,
+        model: save.model.trim() || withKey.llm.model,
         temperature: save.temperature,
         timeoutMs: save.timeoutMs,
         maxHistory: save.maxHistory
@@ -229,30 +212,14 @@ export class ConfigService {
     }
   }
 
-  effectiveProfile(
-    config: AppConfig,
-    role: CharacterId
-  ): { systemPrompt: string; model: string } {
-    const profile = CHARACTER_PROFILES[role]
-    const override = config.characters[role]
-    return {
-      systemPrompt: override?.systemPrompt?.trim() || profile.systemPrompt,
-      model: override?.model?.trim() || profile.model
-    }
-  }
-
-  applyCharacterDefaults(
-    config: AppConfig,
-    role: CharacterId,
-    profile: { systemPrompt: string; model: string }
-  ): AppConfig {
-    const override = config.characters[role]
-    const systemPrompt = override?.systemPrompt?.trim() || profile.systemPrompt
-    const model = override?.model?.trim() || profile.model
+  applyCharacter(config: AppConfig, characterId: CharacterId): AppConfig {
     return {
       ...config,
-      currentCharacter: role,
-      llm: { ...config.llm, systemPrompt, model }
+      currentCharacter: characterId,
+      voice: {
+        ...config.voice,
+        selectedVoice: DEFAULT_VOICE_FOR_CHARACTER[characterId]
+      }
     }
   }
 
@@ -279,8 +246,4 @@ export class ConfigService {
       }
     }
   }
-}
-
-function isCharacterId(value: unknown): value is CharacterId {
-  return typeof value === 'string' && value in CHARACTER_PROFILES
 }

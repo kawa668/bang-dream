@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { ConfigService } from '../../src/main/config'
 import type { SecretStore } from '../../src/main/config'
-import type { AppConfig, LLMSettingsSave } from '../../src/shared/chat'
+import type { LLMSettingsSave } from '../../src/shared/chat'
 
 class FakeSecretStore implements SecretStore {
   isAvailable(): boolean {
@@ -48,7 +48,8 @@ describe('ConfigService', () => {
     expect(config.voice.sttTimeoutMs).toBe(600000)
     expect(config.voice.voiceConversationEnabled).toBe(false)
     expect(config.currentCharacter).toBe('mutsumi')
-    expect(config.characters['anon']).toBeDefined()
+    expect(config.llm).not.toHaveProperty('systemPrompt')
+    expect(config).not.toHaveProperty('characters')
   })
 
   it('migrates legacy defaultVoice to selectedVoice', async () => {
@@ -60,6 +61,7 @@ describe('ConfigService', () => {
 
     expect(config.voice.selectedVoice).toBe('黑祥')
     expect(config.voice.enabled).toBe(false)
+    expect(config.currentCharacter).toBe('sakiko-black')
   })
 
   it('applies voice config changes without touching LLM settings', async () => {
@@ -73,6 +75,15 @@ describe('ConfigService', () => {
     expect(updated.voice.enabled).toBe(true)
     expect(updated.voice.selectedVoice).toBe('白祥')
     expect(updated.llm.model).toBe(config.llm.model)
+  })
+
+  it('applies a character and its default voice together', async () => {
+    const service = new ConfigService(join(dir, 'config.json'), new FakeSecretStore())
+    const config = await service.load()
+    const updated = service.applyCharacter(config, 'mortis')
+
+    expect(updated.currentCharacter).toBe('mortis')
+    expect(updated.voice.selectedVoice).toBe('墨提斯')
   })
 
   it('encrypts API keys and never writes plaintext', async () => {
@@ -91,14 +102,13 @@ describe('ConfigService', () => {
 
   it('keeps the existing encrypted key when save sends a blank key', async () => {
     const service = new ConfigService(join(dir, 'config.json'), new FakeSecretStore())
-    let config: AppConfig = await service.load()
+    let config = await service.load()
     config = service.setApiKey(config, 'old-key')
 
     const save: LLMSettingsSave = {
       baseUrl: 'https://relay.example.com/v1',
       apiKey: '',
-      model: 'deepseek v4flash',
-      systemPrompt: '你是若叶睦',
+      model: 'deepseek-v4-flash',
       temperature: 0.7,
       timeoutMs: 10000,
       maxHistory: 10
@@ -109,37 +119,41 @@ describe('ConfigService', () => {
     expect(saved.llm.baseUrl).toBe('https://relay.example.com/v1')
   })
 
-  it('returns a view without the plaintext key', async () => {
+  it('returns character identity without exposing the system prompt', async () => {
     const service = new ConfigService(join(dir, 'config.json'), new FakeSecretStore())
-    let config: AppConfig = await service.load()
+    let config = await service.load()
     config = service.setApiKey(config, 'hidden-key')
 
     const view = service.toView(config)
     expect(view.hasApiKey).toBe(true)
+    expect(view.characterId).toBe('mutsumi')
+    expect(view.characterName).toBe('若叶睦')
+    expect(view).not.toHaveProperty('systemPrompt')
     expect(JSON.stringify(view)).not.toContain('hidden-key')
     expect(view).not.toHaveProperty('apiKey')
   })
 
-  it('applies system prompt/model to the current character override', async () => {
+  it('migrates three legacy characters to five global personalities', async () => {
+    await writeFile(join(dir, 'config.json'), JSON.stringify({
+      llm: {
+        model: 'deepseek v4flash',
+        systemPrompt: 'legacy prompt',
+        sessionId: 'ses_092cf255-41ec-4605-bd6b-70ae3f482362'
+      },
+      voice: { selectedVoice: '黑祥' },
+      currentCharacter: 'sakiko',
+      characters: {
+        sakiko: { model: 'custom-model', systemPrompt: 'legacy override' }
+      }
+    }), 'utf8')
     const service = new ConfigService(join(dir, 'config.json'), new FakeSecretStore())
-    let config: AppConfig = await service.load()
+    const config = await service.load()
 
-    const save: LLMSettingsSave = {
-      baseUrl: 'https://relay.example.com/v1',
-      apiKey: '',
-      model: 'gpt-4o',
-      systemPrompt: '你是千早爱音',
-      temperature: 0.7,
-      timeoutMs: 10000,
-      maxHistory: 10
-    }
-    config = service.applySave(config, save)
-
-    expect(config.characters['mutsumi']).toMatchObject({
-      systemPrompt: '你是千早爱音',
-      model: 'gpt-4o'
-    })
-    expect(service.toView(config).model).toBe('gpt-4o')
+    expect(config.currentCharacter).toBe('sakiko-black')
+    expect(config.llm.model).toBe('custom-model')
+    expect(config.llm.sessionId).toBe('ses_092cf255-41ec-4605-bd6b-70ae3f482362')
+    expect(config.llm).not.toHaveProperty('systemPrompt')
+    expect(config).not.toHaveProperty('characters')
   })
 
   it('migrates the legacy model id to the supported id', async () => {
@@ -154,7 +168,17 @@ describe('ConfigService', () => {
 
     expect(config.llm.model).toBe('deepseek-v4-flash')
     expect(config.llm.sessionId).toBe('ses_092cf255-41ec-4605-bd6b-70ae3f482362')
-    expect(config.characters['mutsumi'].model).toBe('deepseek-v4-flash')
+    expect(config).not.toHaveProperty('characters')
+  })
+
+  it('preserves a configured global model', async () => {
+    await writeFile(join(dir, 'config.json'), JSON.stringify({
+      llm: { model: 'custom-model' }
+    }), 'utf8')
+    const service = new ConfigService(join(dir, 'config.json'), new FakeSecretStore())
+    const config = await service.load()
+
+    expect(config.llm.model).toBe('custom-model')
   })
 
   it('preserves a configured OpenCode session id', async () => {
@@ -165,18 +189,5 @@ describe('ConfigService', () => {
     const config = await service.load()
 
     expect(config.llm.sessionId).toBe('ses_ffa09605-3186-493d-b5a2-8bf89c95b32d')
-  })
-
-  it('preserves a pre-existing custom model as the current character override', async () => {
-    await writeFile(join(dir, 'config.json'), JSON.stringify({
-      llm: { model: 'custom-model', systemPrompt: '自定义提示' }
-    }), 'utf8')
-    const service = new ConfigService(join(dir, 'config.json'), new FakeSecretStore())
-    const config = await service.load()
-
-    expect(config.characters['mutsumi']).toMatchObject({
-      model: 'custom-model',
-      systemPrompt: '自定义提示'
-    })
   })
 })

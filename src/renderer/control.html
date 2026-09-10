@@ -748,10 +748,10 @@
           <span>模型</span>
           <input id="llm-model" type="text" />
         </label>
-        <label class="field">
-          <span>System Prompt</span>
-          <textarea id="llm-system-prompt" rows="3"></textarea>
-        </label>
+        <div class="field">
+          <span>当前角色</span>
+          <p id="llm-current-character" class="status" role="status"></p>
+        </div>
         <label class="field">
           <span>Temperature</span>
           <input id="llm-temperature" type="number" step="0.1" min="0" max="2" />

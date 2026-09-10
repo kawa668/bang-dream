@@ -12,7 +12,7 @@ import { ElectronSecretStore } from './electronSecretStore'
 import type { AppConfig, LLMSettingsSave } from '../shared/chat'
 import type { SttStateMessage, VoiceId, VoiceStateMessage } from '../shared/voice'
 import { isVoiceId } from '../shared/voice'
-import { characterForModel, profileForModel } from '../shared/characterProfiles'
+import { characterForModel, profileForCharacter } from '../shared/characterProfiles'
 import { detectEmotion } from '../shared/emotion'
 import { GPTSoVITSProvider } from './voice/gptSoVITSProvider'
 import { FasterWhisperProvider } from './voice/fasterWhisperProvider'
@@ -139,7 +139,7 @@ function handleChatEvent(event: ChatEvent): void {
 
 function rebuildChatManager(): void {
   if (!configService || !appConfig) return
-  const profile = configService.effectiveProfile(appConfig, appConfig.currentCharacter)
+  const profile = profileForCharacter(appConfig.currentCharacter)
   const conversation = new ConversationManager(
     appConfig.llm.maxHistory,
     profile.systemPrompt
@@ -148,7 +148,7 @@ function rebuildChatManager(): void {
     baseUrl: appConfig.llm.baseUrl,
     apiKey: configService.getApiKey(appConfig),
     sessionId: appConfig.llm.sessionId,
-    model: profile.model,
+    model: appConfig.llm.model,
     temperature: appConfig.llm.temperature,
     timeoutMs: appConfig.llm.timeoutMs
   })
@@ -238,11 +238,7 @@ app.whenReady().then(async () => {
     if (!configService || !appConfig) return
     const role = characterForModel(id)
     if (role !== appConfig.currentCharacter) {
-      appConfig = configService.applyCharacterDefaults(
-        appConfig,
-        role,
-        profileForModel(id)
-      )
+      appConfig = configService.applyCharacter(appConfig, role)
       void configService.save(appConfig).catch(() => {})
       rebuildChatManager()
     }
