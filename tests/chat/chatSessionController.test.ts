@@ -283,6 +283,47 @@ describe('ChatSessionController', () => {
     expect(events).toEqual([{ type: 'start', requestId: 'req-old' }])
   })
 
+  it('isolates a cleared stream that ignores cancellation and uses a new generation', async () => {
+    let releaseStarted!: () => void
+    const started = new Promise<void>((resolve) => {
+      releaseStarted = resolve
+    })
+    let requestAborted = false
+    const lateProvider: LLMProvider = {
+      async *chat(_messages, signal) {
+        signal?.addEventListener('abort', () => {
+          requestAborted = true
+        })
+        releaseStarted()
+        await new Promise<void>((resolve) => setTimeout(resolve, 20))
+        yield 'late reply'
+      }
+    }
+    const events: ChatEvent[] = []
+    let providerCalls = 0
+    const controller = createController({
+      createProvider: () => {
+        providerCalls += 1
+        return providerCalls === 1 ? lateProvider : immediateProvider('fresh reply')
+      },
+      onChatEvent: (event) => events.push(event)
+    })
+
+    const pending = controller.send('req-old', 'hello')
+    await started
+    await controller.clear('req-clear')
+    await pending
+    await controller.send('req-new', 'hello')
+
+    expect(requestAborted).toBe(true)
+    expect(events).toEqual([
+      { type: 'start', requestId: 'req-old' },
+      { type: 'start', requestId: 'req-new' },
+      { type: 'delta', requestId: 'req-new', delta: 'fresh reply' },
+      { type: 'complete', requestId: 'req-new', message: 'fresh reply' }
+    ])
+  })
+
   it('cancels active work and ignores later operations after dispose', async () => {
     const events: ChatEvent[] = []
     let cancelVoiceCalls = 0

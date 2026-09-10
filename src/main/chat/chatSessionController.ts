@@ -114,15 +114,27 @@ export class ChatSessionController {
   async clear(requestId: string): Promise<void> {
     if (this.disposed) return
 
+    const generation = this.generation + 1
+    let nextSession: ChatSession
+    try {
+      nextSession = this.createSession(this.config, generation)
+    } catch (error) {
+      this.options.onError(requestId, errorMessage(error))
+      return
+    }
+
     this.session.chat.cancel()
-    this.session.chat.clear()
+    this.generation = generation
+    this.session = nextSession
     try {
       await this.options.clearMemory()
     } catch (error) {
       this.options.onError(requestId, errorMessage(error))
       return
     }
-    if (!this.disposed) this.options.onClear(requestId)
+    if (!this.disposed && generation === this.generation) {
+      this.options.onClear(requestId)
+    }
   }
 
   dispose(): void {
