@@ -211,7 +211,7 @@ describe('TTSManager', () => {
     const { manager, persisted } = createManager(provider, launcher)
 
     expect(manager.stateMessage().state.voiceConversationEnabled).toBe(false)
-    manager.setVoiceConversation(true, 'req-dialog')
+    manager.setVoiceConversation(true)
 
     expect(manager.stateMessage().state.voiceConversationEnabled).toBe(true)
     expect(persisted.at(-1)).toMatchObject({ voiceConversationEnabled: true })

@@ -147,7 +147,7 @@ describe('ChatSessionController', () => {
       llm: { ...defaultTestConfig.llm, model: 'gpt-4o' }
     }
 
-    await controller.updateConfig(next, 'req-config')
+    await controller.updateConfig(next)
 
     expect(controller.characterId).toBe('mutsumi')
     expect(persisted.at(-1)?.llm.model).toBe('gpt-4o')
@@ -166,7 +166,7 @@ describe('ChatSessionController', () => {
       llm: { ...defaultTestConfig.llm, model: 'gpt-4o' }
     }
 
-    await expect(controller.updateConfig(next, 'req-config')).rejects.toThrow('disk full')
+    await expect(controller.updateConfig(next)).rejects.toThrow('disk full')
     expect(controller.characterId).toBe('mutsumi')
   })
 

@@ -44,7 +44,6 @@ let voiceManager: TTSManager | null = null
 let sttManager: STTManager | null = null
 let audioPlayer: AudioPlayer | null = null
 let audioSink: ElectronAudioSink | null = null
-let currentModelId: string | null = null
 let memoryStore: JSONMemoryStore | null = null
 let currentEmotion: string | null = null
 let quitting = false
@@ -251,7 +250,6 @@ app.whenReady().then(async () => {
   })
 
   ipcMain.on('model:changed', (_event, id: string) => {
-    currentModelId = id
     controlWindow?.webContents.send('model:switch', id)
     void chatSessionController
       ?.switchToModel(id, createRequestId('model-change'))
@@ -330,14 +328,14 @@ app.whenReady().then(async () => {
       voiceConversationEnabled: Boolean(payload.enabled)
     })
     void configService.save(appConfig).catch(() => {})
-    voiceManager?.setVoiceConversation(Boolean(payload.enabled), payload.requestId)
+    voiceManager?.setVoiceConversation(Boolean(payload.enabled))
   })
 
   ipcMain.on('voice:playback-ended', (_event, payload: {
     requestId: string
     playbackId: string
   }) => {
-    audioSink?.handlePlaybackEnded(payload.requestId, payload.playbackId)
+    audioSink?.handlePlaybackEnded(payload.playbackId)
   })
 
   ipcMain.on('voice:playback-error', (_event, payload: {
@@ -345,11 +343,7 @@ app.whenReady().then(async () => {
     playbackId: string
     message: string
   }) => {
-    audioSink?.handlePlaybackError(
-      payload.requestId,
-      payload.playbackId,
-      payload.message
-    )
+    audioSink?.handlePlaybackError(payload.playbackId, payload.message)
   })
 
   ipcMain.handle('config:get', () => {
@@ -360,7 +354,7 @@ app.whenReady().then(async () => {
   ipcMain.handle('config:save', async (_event, save: LLMSettingsSave) => {
     if (!configService || !appConfig) return null
     const nextConfig = configService.applySave(appConfig, save)
-    await chatSessionController?.updateConfig(nextConfig, createRequestId('config-save'))
+    await chatSessionController?.updateConfig(nextConfig)
     return appConfig ? configService.toView(appConfig) : null
   })
 

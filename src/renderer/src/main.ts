@@ -198,7 +198,7 @@ async function main(): Promise<void> {
       })
     })
 
-    window.api.onVoiceStop(({ playbackId }) => {
+    window.api.onVoiceStop(() => {
       voiceAudio.pause()
       voiceAudio.currentTime = 0
       voiceAudio.onended = null

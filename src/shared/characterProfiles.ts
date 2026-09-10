@@ -68,7 +68,3 @@ export function characterForModel(modelId: string): CharacterId {
 export function profileForCharacter(characterId: CharacterId): CharacterProfile {
   return CHARACTER_PROFILES[characterId]
 }
-
-export function isCharacterId(value: unknown): value is CharacterId {
-  return typeof value === 'string' && value in CHARACTER_PROFILES
-}

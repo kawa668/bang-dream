@@ -67,7 +67,7 @@ export class ChatSessionController {
     return this.switchTo(characterForModel(modelId), requestId)
   }
 
-  async updateConfig(nextConfig: AppConfig, requestId: string): Promise<void> {
+  async updateConfig(nextConfig: AppConfig): Promise<void> {
     if (this.disposed) throw new ChatSessionUpdateError('聊天会话已关闭')
 
     const config = {

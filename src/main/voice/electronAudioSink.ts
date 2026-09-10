@@ -43,7 +43,7 @@ export class ElectronAudioSink implements PlaybackSink {
     this.settle(playbackId, new Error('语音播放已停止'))
   }
 
-  handlePlaybackEnded(requestId: RequestId, playbackId: string): void {
+  handlePlaybackEnded(playbackId: string): void {
     const pending = this.pending.get(playbackId)
     if (!pending) return
     this.pending.delete(playbackId)
@@ -52,7 +52,6 @@ export class ElectronAudioSink implements PlaybackSink {
   }
 
   handlePlaybackError(
-    requestId: RequestId,
     playbackId: string,
     message: string
   ): void {

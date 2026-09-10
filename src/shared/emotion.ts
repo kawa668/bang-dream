@@ -23,19 +23,6 @@ const EXPRESSION_KEYWORDS: Record<Exclude<Emotion, 'neutral'>, string[]> = {
   calm: ['default', 'idle']
 }
 
-export const EMOTION_LABELS: Record<Emotion, string> = {
-  neutral: '平静',
-  calm: '安静',
-  happy: '开心',
-  sad: '难过',
-  excited: '兴奋',
-  thinking: '思考'
-}
-
-export function emotionLabel(emotion: Emotion): string {
-  return EMOTION_LABELS[emotion]
-}
-
 export function pickExpressionAction(
   actions: string[],
   emotion: Emotion

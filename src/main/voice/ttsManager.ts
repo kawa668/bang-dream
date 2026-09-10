@@ -78,7 +78,7 @@ export class TTSManager {
     }
   }
 
-  setVoiceConversation(enabled: boolean, requestId?: string): void {
+  setVoiceConversation(enabled: boolean): void {
     if (this.voiceConversationEnabled === enabled) return
     this.voiceConversationEnabled = enabled
     this.persist({
