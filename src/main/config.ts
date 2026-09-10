@@ -52,7 +52,7 @@ export const DEFAULT_CONFIG: AppConfig = {
     sttPrecision: 'auto',
     sttTimeoutMs: 600000,
     gptSovitsDir: 'D:\\GPT-SOVITS\\GPT-SoVITS-v2pro-20250604-nvidia50\\GPT-SoVITS-v2pro-20250604-nvidia50',
-    trainingAudioDir: 'D:\\AGENT\\live\\训练音频',
+    trainingAudioDir: 'D:\\GPT-SOVITS\\训练音频',
     startupTimeoutMs: 300000,
     voiceConversationEnabled: false
   },

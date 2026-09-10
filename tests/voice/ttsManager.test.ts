@@ -76,7 +76,8 @@ function createManager(
   provider: FakeProvider,
   launcher: FakeLauncher,
   config = voiceConfig,
-  stopPlayback = () => {}
+  stopPlayback = () => {},
+  voiceFileExists: (path: string) => boolean = () => true
 ) {
   const states: VoiceStateMessage[] = []
   const persisted: Array<{
@@ -96,6 +97,7 @@ function createManager(
       played.push(requestId)
     },
     stopPlayback,
+    voiceFileExists,
     pollIntervalMs: 1
   })
   return { manager, states, persisted, played }
@@ -181,6 +183,26 @@ describe('TTSManager', () => {
     const last = states.at(-1)
     expect(last?.state.runtimeState).toBe('error')
     expect(last?.state.message).toContain('tts down')
+  })
+
+  it('reports a missing reference audio file before starting the service', async () => {
+    const provider = new FakeProvider()
+    const launcher = new FakeLauncher()
+    const missingPath = catalog['若叶睦'].referenceAudioPath
+    const { manager, states } = createManager(
+      provider,
+      launcher,
+      voiceConfig,
+      () => {},
+      (path) => path !== missingPath
+    )
+
+    await manager.setEnabled(true)
+
+    expect(provider.probeCalls).toBe(0)
+    expect(launcher.launchCalls).toBe(0)
+    expect(states.at(-1)?.state.runtimeState).toBe('error')
+    expect(states.at(-1)?.state.message).toBe(`参考音频不存在：${missingPath}`)
   })
 
   it('exposes and persists voiceConversationEnabled', async () => {

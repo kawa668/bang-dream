@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs'
 import type { OutfitId } from '../../shared/types'
 import type { VoiceConfig } from '../../shared/chat'
 import type { VoiceId, VoiceRuntimeState, VoiceStateMessage } from '../../shared/voice'
@@ -17,6 +18,7 @@ export interface TTSManagerOptions {
   onState: (message: VoiceStateMessage) => void
   play: (requestId: string, audio: Uint8Array) => Promise<void>
   stopPlayback: () => void
+  voiceFileExists?: (path: string) => boolean
   pollIntervalMs?: number
 }
 
@@ -29,6 +31,7 @@ export class TTSManager {
   private readonly onState: TTSManagerOptions['onState']
   private readonly play: TTSManagerOptions['play']
   private readonly stopPlayback: TTSManagerOptions['stopPlayback']
+  private readonly voiceFileExists: (path: string) => boolean
   private readonly pollIntervalMs: number
 
   private enabled: boolean
@@ -54,6 +57,7 @@ export class TTSManager {
     this.onState = options.onState
     this.play = options.play
     this.stopPlayback = options.stopPlayback
+    this.voiceFileExists = options.voiceFileExists ?? existsSync
     this.pollIntervalMs = options.pollIntervalMs ?? 2000
     this.enabled = options.voiceConfig.enabled
     this.selectedVoice = options.voiceConfig.selectedVoice
@@ -117,6 +121,7 @@ export class TTSManager {
 
     if (enabled) {
       try {
+        this.assertVoiceFiles(this.catalog[this.selectedVoice])
         await this.ensureStarted(requestId)
         await this.ensureVoiceLoaded(this.selectedVoice, requestId)
         this.setRuntimeState('idle', requestId)
@@ -134,6 +139,7 @@ export class TTSManager {
     const generation = this.speechGeneration
     const task = this.speechTail.then(async () => {
       if (!this.enabled || this.disposed || generation !== this.speechGeneration) return
+      this.assertVoiceFiles(this.catalog[this.selectedVoice])
       await this.ensureStarted(requestId)
       if (generation !== this.speechGeneration) return
       await this.ensureVoiceLoaded(this.selectedVoice, requestId)
@@ -200,6 +206,16 @@ export class TTSManager {
       this.startPromise = null
     })
     return this.startPromise
+  }
+
+  private assertVoiceFiles(profile: VoiceProfile): void {
+    const files = [
+      { label: 'GPT 权重', path: profile.gptWeightsPath },
+      { label: 'SoVITS 权重', path: profile.sovitsWeightsPath },
+      { label: '参考音频', path: profile.referenceAudioPath }
+    ]
+    const missing = files.find((file) => !this.voiceFileExists(file.path))
+    if (missing) throw new Error(`${missing.label}不存在：${missing.path}`)
   }
 
   private ensureVoiceLoaded(voiceId: VoiceId, requestId?: string): Promise<void> {

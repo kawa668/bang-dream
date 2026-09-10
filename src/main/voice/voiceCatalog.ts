@@ -25,14 +25,14 @@ const VOICE_SPECS: VoiceProfileSpec[] = [
     gptFileName: 'MyGO_千早爱音_v2pp.ckpt',
     sovitsFileName: 'MyGO_千早爱音_v2pp.pth',
     referenceDir: '千早爱音',
-    referenceFile: '训练集/そう！今度の朝活はおしゃれなカフェで美味しいモーニングをいっぱい食べるんだ～！.mp3',
+    referenceFile: 'そう！今度の朝活はおしゃれなカフェで美味しいモーニングをいっぱい食べるんだ～！.mp3',
     promptText: 'そう！今度の朝活はおしゃれなカフェで美味しいモーニングをいっぱい食べるんだ～！'
   },
   {
     voiceId: '白祥',
     gptFileName: 'Mujica_豊川祥子_白_v2pp.ckpt',
     sovitsFileName: 'Mujica_豊川祥子_白_v2pp.pth',
-    referenceDir: '丰川祥子（白祥）',
+    referenceDir: '白祥',
     referenceFile: '(A)あなたと空を見上げるのは、いつも夏でしたわね.wav',
     promptText: 'あなたと空を見上げるのは、いつも夏でしたわね'
   },
@@ -40,7 +40,7 @@ const VOICE_SPECS: VoiceProfileSpec[] = [
     voiceId: '黑祥',
     gptFileName: 'Mujica_豊川祥子_黒_v2pp.ckpt',
     sovitsFileName: 'Mujica_豊川祥子_黒_v2pp.pth',
-    referenceDir: '丰川祥子（黑祥）',
+    referenceDir: '黑祥',
     referenceFile: '(A)今後は発言にプロとしての自覚をお持ちになって.wav',
     promptText: '今後は発言にプロとしての自覚をお持ちになって'
   },
@@ -48,7 +48,7 @@ const VOICE_SPECS: VoiceProfileSpec[] = [
     voiceId: '墨提斯',
     gptFileName: 'Mujica_Mortis_v2pp.ckpt',
     sovitsFileName: 'Mujica_Mortis_v2pp.pth',
-    referenceDir: '墨提斯',
+    referenceDir: 'mortis',
     referenceFile: '(A)なんで？解散なんて話になってなかったじゃない、どうしてそうなるの？.wav',
     promptText: 'なんで？解散なんて話になってなかったじゃない、どうしてそうなるの？'
   }

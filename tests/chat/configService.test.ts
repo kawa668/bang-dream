@@ -46,6 +46,7 @@ describe('ConfigService', () => {
     expect(config.voice.whisperModel).toBe('large-v3-turbo')
     expect(config.voice.sttPrecision).toBe('auto')
     expect(config.voice.sttTimeoutMs).toBe(600000)
+    expect(config.voice.trainingAudioDir).toBe('D:\\GPT-SOVITS\\训练音频')
     expect(config.voice.voiceConversationEnabled).toBe(false)
     expect(config.currentCharacter).toBe('mutsumi')
     expect(config.llm).not.toHaveProperty('systemPrompt')
