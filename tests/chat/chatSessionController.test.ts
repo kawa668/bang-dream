@@ -4,7 +4,10 @@ import type {
   ChatSessionControllerOptions
 } from '../../src/main/chat/chatSessionController'
 import type { ChatEvent } from '../../src/main/chat/chatManager'
-import type { LLMProvider } from '../../src/main/chat/llmProvider'
+import {
+  LLMRequestCancelledError,
+  type LLMProvider
+} from '../../src/main/chat/llmProvider'
 import {
   DEFAULT_VOICE_FOR_CHARACTER,
   profileForCharacter
@@ -203,6 +206,40 @@ describe('ChatSessionController', () => {
     ])
     expect(clearMemoryCalls).toBe(1)
     expect(clearedRequestIds).toEqual(['req-clear'])
+  })
+
+  it('cancels active streaming and suppresses late events when clearing history', async () => {
+    let releaseStarted!: () => void
+    const started = new Promise<void>((resolve) => {
+      releaseStarted = resolve
+    })
+    let requestAborted = false
+    const provider: LLMProvider = {
+      async *chat(_messages, signal) {
+        releaseStarted()
+        await new Promise<void>((resolve, reject) => {
+          signal?.addEventListener('abort', () => {
+            requestAborted = true
+            reject(new LLMRequestCancelledError())
+          }, { once: true })
+          setTimeout(resolve, 20)
+        })
+        yield 'late reply'
+      }
+    }
+    const events: ChatEvent[] = []
+    const controller = createController({
+      createProvider: () => provider,
+      onChatEvent: (event) => events.push(event)
+    })
+
+    const pending = controller.send('req-old', 'hello')
+    await started
+    await controller.clear('req-clear')
+    await pending
+
+    expect(requestAborted).toBe(true)
+    expect(events).toEqual([{ type: 'start', requestId: 'req-old' }])
   })
 
   it('cancels active work and ignores later operations after dispose', async () => {

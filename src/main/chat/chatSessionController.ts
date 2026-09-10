@@ -81,6 +81,7 @@ export class ChatSessionController {
   async clear(requestId: string): Promise<void> {
     if (this.disposed) return
 
+    this.session.chat.cancel()
     this.session.chat.clear()
     try {
       await this.options.clearMemory()
