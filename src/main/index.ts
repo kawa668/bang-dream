@@ -229,7 +229,7 @@ app.whenReady().then(async () => {
   })
 
   ipcMain.on('action:play', (_event, action: string) => {
-    outputWindow?.webContents.send('action:play', action)
+    sendToOutput('action:play', action)
   })
 
   ipcMain.on('model:changed', (_event, id: string) => {
@@ -241,7 +241,7 @@ app.whenReady().then(async () => {
   })
 
   ipcMain.on('model:switch-request', (_event, id: string) => {
-    outputWindow?.webContents.send('model:switch', id)
+    sendToOutput('model:switch', id)
   })
 
   ipcMain.on('model:bounds', (_event, bounds: { x: number; y: number; width: number; height: number }) => {
