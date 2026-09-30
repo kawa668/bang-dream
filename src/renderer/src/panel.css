@@ -35,6 +35,11 @@
   display: none;
 }
 
+.control-panel:focus,
+.control-panel:focus-visible {
+  outline: none;
+}
+
 .control-panel .panel-header,
 .control-panel .panel-footer {
   flex: none;
@@ -297,6 +302,9 @@
 }
 
 .control-panel .mic {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 44px;
   flex: 0 0 44px;
   padding: 0;

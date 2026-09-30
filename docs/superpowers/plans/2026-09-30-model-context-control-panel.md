@@ -8,6 +8,12 @@
 
 **Tech Stack:** Electron 37、TypeScript 5.7、electron-vite 3、Vitest 3、PixiJS 6、原生 DOM API
 
+## 实施状态
+
+- Task 1-8 已完成并提交。
+- 控制面板的根焦点描边和麦克风按钮已完成视觉修正。
+- Task 9 待完成 README、完整验证和最终推送。
+
 ## Global Constraints
 
 - 支持平台为 Windows 10/11。

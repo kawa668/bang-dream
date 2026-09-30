@@ -53,7 +53,9 @@ export class ChatPanel {
         <div id="chat-messages" class="chat-messages"></div>
         <div class="chat-input-row">
           <input id="chat-input" type="text" placeholder="和宠物说话..." />
-          <button id="stt-button" class="btn ghost mic" type="button" aria-label="按住说话">麦克风</button>
+          <button id="stt-button" class="btn ghost mic" type="button" aria-label="按住说话" title="按住说话">
+            <svg viewBox="0 0 24 24" width="16" height="16" role="presentation"><path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3z" fill="currentColor"/><path d="M5 11a1 1 0 1 1 2 0 5 5 0 0 0 10 0 1 1 0 1 1 2 0 7 7 0 0 1-6 6.92V21h3a1 1 0 1 1 0 2H8a1 1 0 1 1 0-2h3v-3.08A7 7 0 0 1 5 11z" fill="currentColor"/></svg>
+          </button>
           <button id="chat-send" class="btn primary" type="button">发送</button>
           <button id="chat-clear" class="btn ghost" type="button">清空</button>
         </div>
