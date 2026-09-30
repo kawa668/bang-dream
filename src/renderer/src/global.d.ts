@@ -19,6 +19,12 @@ declare global {
       reportModel: (id: OutfitId) => void
       requestModelSwitch: (id: OutfitId) => void
       reportModelBounds: (bounds: { x: number; y: number; width: number; height: number }) => void
+      reportPanelBounds: (bounds: {
+        x: number
+        y: number
+        width: number
+        height: number
+      } | null) => void
       reportDragging: (dragging: boolean) => void
       reportMenuOpen: (open: boolean) => void
       sendChatMessage: (requestId: RequestId, text: string) => void

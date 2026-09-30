@@ -40,6 +40,14 @@ const api = {
   reportModelBounds: (bounds: { x: number; y: number; width: number; height: number }): void => {
     ipcRenderer.send('model:bounds', bounds)
   },
+  reportPanelBounds: (bounds: {
+    x: number
+    y: number
+    width: number
+    height: number
+  } | null): void => {
+    ipcRenderer.send('panel:bounds', bounds)
+  },
   reportDragging: (dragging: boolean): void => {
     ipcRenderer.send('drag-state', dragging)
   },

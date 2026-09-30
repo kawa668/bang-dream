@@ -27,6 +27,7 @@ import { ElectronSttProcessLauncher } from './voice/electronSttProcessLauncher'
 import { buildVoiceCatalog } from './voice/voiceCatalog'
 import { AudioPlayer } from './voice/audioPlayer'
 import { ElectronAudioSink } from './voice/electronAudioSink'
+import { shouldInterceptCursor } from './windowInteraction'
 
 const SHORTCUTS: Array<[string, string]> = [
   ['F1', 'casual'],
@@ -38,6 +39,7 @@ const SHORTCUTS: Array<[string, string]> = [
 let outputWindow: BrowserWindow | null = null
 let controlWindow: BrowserWindow | null = null
 let modelBounds: { x: number; y: number; width: number; height: number } | null = null
+let panelBounds: { x: number; y: number; width: number; height: number } | null = null
 let isDragging = false
 let isMenuOpen = false
 let mouseInterceptEnabled = false
@@ -59,6 +61,11 @@ function resolveAppIcon(): string | undefined {
     join(__dirname, '../../resources', name)
   ]
   return candidates.find((candidate) => existsSync(candidate))
+}
+
+function sendToOutput(channel: string, payload?: unknown): void {
+  if (!outputWindow || outputWindow.isDestroyed()) return
+  outputWindow.webContents.send(channel, payload)
 }
 
 function createOutputWindow(): BrowserWindow {
@@ -270,6 +277,15 @@ app.whenReady().then(async () => {
     modelBounds = bounds
   })
 
+  ipcMain.on('panel:bounds', (_event, bounds: {
+    x: number
+    y: number
+    width: number
+    height: number
+  } | null) => {
+    panelBounds = bounds
+  })
+
   ipcMain.on('drag-state', (_event, dragging: boolean) => {
     isDragging = dragging
   })
@@ -371,15 +387,13 @@ app.whenReady().then(async () => {
     if (!outputWindow || !modelBounds) return
     const cursor = screen.getCursorScreenPoint()
     const winBounds = outputWindow.getBounds()
-    const left = winBounds.x + modelBounds.x
-    const top = winBounds.y + modelBounds.y
-    const right = left + modelBounds.width
-    const bottom = top + modelBounds.height
-    const inside = cursor.x >= left
-      && cursor.x <= right
-      && cursor.y >= top
-      && cursor.y <= bottom
-    const shouldIntercept = inside || isDragging || isMenuOpen
+    const shouldIntercept = shouldInterceptCursor({
+      cursor,
+      windowBounds: winBounds,
+      modelBounds,
+      panelBounds,
+      dragging: isDragging
+    }) || isMenuOpen
     if (shouldIntercept !== mouseInterceptEnabled) {
       mouseInterceptEnabled = shouldIntercept
       outputWindow.setIgnoreMouseEvents(!shouldIntercept)
