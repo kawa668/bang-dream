@@ -91,6 +91,17 @@ export class Live2DRenderer {
       .sort()
   }
 
+  getModelBounds(): { x: number; y: number; width: number; height: number } | null {
+    if (!this.model) return null
+    const bounds = this.model.getBounds()
+    return {
+      x: bounds.x,
+      y: bounds.y,
+      width: bounds.width,
+      height: bounds.height
+    }
+  }
+
   hitTest(clientX: number, clientY: number): boolean {
     const rect = this.canvas.getBoundingClientRect()
     return this.isInsideModel({ x: clientX - rect.left, y: clientY - rect.top })
@@ -102,8 +113,8 @@ export class Live2DRenderer {
   }
 
   private isInsideModel(point: { x: number; y: number }): boolean {
-    if (!this.model) return false
-    const bounds = this.model.getBounds()
+    const bounds = this.getModelBounds()
+    if (!bounds) return false
     return point.x >= bounds.x
       && point.x <= bounds.x + bounds.width
       && point.y >= bounds.y
@@ -111,14 +122,8 @@ export class Live2DRenderer {
   }
 
   private reportBounds(): void {
-    if (!this.model) return
-    const bounds = this.model.getBounds()
-    window.api.reportModelBounds({
-      x: bounds.x,
-      y: bounds.y,
-      width: bounds.width,
-      height: bounds.height
-    })
+    const bounds = this.getModelBounds()
+    if (bounds) window.api.reportModelBounds(bounds)
   }
 
   private onPointerDown = (event: PointerEvent): void => {

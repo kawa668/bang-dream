@@ -51,9 +51,6 @@ const api = {
   reportDragging: (dragging: boolean): void => {
     ipcRenderer.send('drag-state', dragging)
   },
-  reportMenuOpen: (open: boolean): void => {
-    ipcRenderer.send('menu-state', open)
-  },
   sendChatMessage: (requestId: RequestId, text: string): void => {
     ipcRenderer.send('chat:send', { requestId, text })
   },

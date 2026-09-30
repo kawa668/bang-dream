@@ -26,7 +26,6 @@ declare global {
         height: number
       } | null) => void
       reportDragging: (dragging: boolean) => void
-      reportMenuOpen: (open: boolean) => void
       sendChatMessage: (requestId: RequestId, text: string) => void
       clearChat: (requestId: RequestId) => void
       getChatHistory: () => Promise<ChatHistoryEntry[]>

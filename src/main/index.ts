@@ -37,11 +37,9 @@ const SHORTCUTS: Array<[string, string]> = [
 ]
 
 let outputWindow: BrowserWindow | null = null
-let controlWindow: BrowserWindow | null = null
 let modelBounds: { x: number; y: number; width: number; height: number } | null = null
 let panelBounds: { x: number; y: number; width: number; height: number } | null = null
 let isDragging = false
-let isMenuOpen = false
 let mouseInterceptEnabled = false
 let chatSessionController: ChatSessionController | null = null
 let configService: ConfigService | null = null
@@ -98,47 +96,22 @@ function createOutputWindow(): BrowserWindow {
   return outputWindow
 }
 
-function createControlWindow(): BrowserWindow {
-  const icon = resolveAppIcon()
-  controlWindow = new BrowserWindow({
-    width: 460,
-    height: 680,
-    minWidth: 380,
-    minHeight: 540,
-    backgroundColor: '#f6f5f1',
-    title: '控制台',
-    ...(icon ? { icon } : {}),
-    webPreferences: {
-      preload: join(__dirname, '../preload/index.js'),
-      contextIsolation: true,
-      nodeIntegration: false
-    }
-  })
-
-  const devUrl = process.env['ELECTRON_RENDERER_URL']
-  if (devUrl) controlWindow.loadURL(`${devUrl}/control.html`)
-  else controlWindow.loadFile(join(__dirname, '../renderer/control.html'))
-  controlWindow.on('closed', () => { controlWindow = null })
-  return controlWindow
-}
-
 const writeErrorLog = (error: unknown): void => {
   appendFile(join(app.getPath('userData'), 'live2d-error.log'), `${new Date().toISOString()} ${error instanceof Error ? error.stack : String(error)}\n`).catch(() => {})
 }
 
 function broadcastChatEvent(event: ChatEvent): void {
-  if (!controlWindow) return
-  if (event.type === 'start') controlWindow.webContents.send('chat:start', event)
-  if (event.type === 'delta') controlWindow.webContents.send('chat:delta', event)
-  if (event.type === 'complete') controlWindow.webContents.send('chat:complete', event)
-  if (event.type === 'error') controlWindow.webContents.send('chat:error', event)
+  if (event.type === 'start') sendToOutput('chat:start', event)
+  if (event.type === 'delta') sendToOutput('chat:delta', event)
+  if (event.type === 'complete') sendToOutput('chat:complete', event)
+  if (event.type === 'error') sendToOutput('chat:error', event)
 }
 
 function handleChatEvent(event: ChatEvent): void {
   if (event.type === 'complete') {
     currentEmotion = detectEmotion(event.message)
-    controlWindow?.webContents.send('chat:complete', { ...event, emotion: currentEmotion })
-    outputWindow?.webContents.send('ai:expression', { emotion: currentEmotion })
+    sendToOutput('chat:complete', { ...event, emotion: currentEmotion })
+    sendToOutput('ai:expression', { emotion: currentEmotion })
     void memoryStore?.append({ role: 'assistant', content: event.message, createdAt: Date.now() })
     void voiceManager?.speak(event.message, event.requestId)
   } else {
@@ -166,7 +139,7 @@ function setupVoiceSystem(): void {
       void configService.save(appConfig).catch(() => {})
     },
     onState: (message: VoiceStateMessage) => {
-      controlWindow?.webContents.send('voice:state', message)
+      sendToOutput('voice:state', message)
     },
     play: (requestId, audio) => player.enqueue(requestId, audio),
     stopPlayback: () => player.stopAll()
@@ -185,10 +158,10 @@ function setupSttSystem(): void {
     launcher: new ElectronSttProcessLauncher(),
     provider: new FasterWhisperProvider({ endpoint: appConfig.voice.sttEndpoint }),
     onState: (message: SttStateMessage) => {
-      controlWindow?.webContents.send('stt:state', message)
+      sendToOutput('stt:state', message)
     },
     onResult: (requestId, text) => {
-      controlWindow?.webContents.send('stt:result', { requestId, text })
+      sendToOutput('stt:result', { requestId, text })
     }
   })
 }
@@ -232,16 +205,16 @@ app.whenReady().then(async () => {
     clearMemory: () => store.clear(),
     onChatEvent: handleChatEvent,
     onClear: (requestId) => {
-      controlWindow?.webContents.send('chat:clear', { requestId })
+      sendToOutput('chat:clear', { requestId })
     },
     onCharacterChanged: (character) => {
-      controlWindow?.webContents.send('character:changed', {
+      sendToOutput('character:changed', {
         id: character.id,
         name: character.name
       })
     },
     onError: (requestId, message) => {
-      controlWindow?.webContents.send('chat:error', { requestId, message })
+      sendToOutput('chat:error', { requestId, message })
     }
   })
   const past = await store.load()
@@ -250,10 +223,9 @@ app.whenReady().then(async () => {
   }
 
   createOutputWindow()
-  createControlWindow()
 
   ipcMain.on('status', (_event, status: string) => {
-    controlWindow?.webContents.send('app:status', status)
+    sendToOutput('app:status', status)
   })
 
   ipcMain.on('action:play', (_event, action: string) => {
@@ -261,7 +233,6 @@ app.whenReady().then(async () => {
   })
 
   ipcMain.on('model:changed', (_event, id: string) => {
-    controlWindow?.webContents.send('model:switch', id)
     void chatSessionController
       ?.switchToModel(id, createRequestId('model-change'))
       .then((switched) => {
@@ -288,10 +259,6 @@ app.whenReady().then(async () => {
 
   ipcMain.on('drag-state', (_event, dragging: boolean) => {
     isDragging = dragging
-  })
-
-  ipcMain.on('menu-state', (_event, open: boolean) => {
-    isMenuOpen = open
   })
 
   ipcMain.on('chat:send', (_event, payload: { requestId: string; text: string }) => {
@@ -393,7 +360,7 @@ app.whenReady().then(async () => {
       modelBounds,
       panelBounds,
       dragging: isDragging
-    }) || isMenuOpen
+    })
     if (shouldIntercept !== mouseInterceptEnabled) {
       mouseInterceptEnabled = shouldIntercept
       outputWindow.setIgnoreMouseEvents(!shouldIntercept)
@@ -402,9 +369,7 @@ app.whenReady().then(async () => {
 
   for (const [accelerator, id] of SHORTCUTS) {
     const ok = globalShortcut.register(accelerator, () => {
-      for (const win of BrowserWindow.getAllWindows()) {
-        win.webContents.send('model:switch', id)
-      }
+      sendToOutput('model:switch', id)
     })
     if (!ok) console.warn(`shortcut registration failed: ${accelerator}`)
   }
@@ -412,7 +377,6 @@ app.whenReady().then(async () => {
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createOutputWindow()
-      createControlWindow()
     }
   })
 })
