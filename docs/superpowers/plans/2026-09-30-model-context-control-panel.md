@@ -546,7 +546,7 @@ describe('shouldInterceptCursor', () => {
 
   it('intercepts the panel area', () => {
     expect(shouldInterceptCursor({
-      cursor: { x: 600, y: 200 },
+      cursor: { x: 650, y: 200 },
       windowBounds,
       modelBounds,
       panelBounds,
