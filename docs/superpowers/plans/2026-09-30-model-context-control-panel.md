@@ -64,7 +64,7 @@ describe('panelPosition', () => {
       viewport: { width: 1200, height: 800 }
     })).toEqual({
       x: 412,
-      y: 220,
+      y: 168,
       width: 420,
       height: 620,
       side: 'right'
@@ -78,7 +78,7 @@ describe('panelPosition', () => {
       viewport: { width: 1200, height: 800 }
     })).toEqual({
       x: 348,
-      y: 220,
+      y: 168,
       width: 420,
       height: 620,
       side: 'left'
@@ -105,7 +105,7 @@ describe('panelPosition', () => {
       viewport: { width: 1200, height: 800 }
     })).toEqual({
       x: 612,
-      y: 220,
+      y: 168,
       width: 420,
       height: 620,
       side: 'right'
