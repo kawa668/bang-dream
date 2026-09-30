@@ -57,3 +57,19 @@ export interface LLMSettingsSave {
   timeoutMs: number
   maxHistory: number
 }
+
+export interface ChatHistoryEntry {
+  role: 'user' | 'assistant'
+  content: string
+  createdAt: number
+}
+
+export function selectRecentChatHistory(
+  entries: ChatHistoryEntry[],
+  maxHistory: number
+): ChatHistoryEntry[] {
+  const limit = Number.isFinite(maxHistory)
+    ? Math.max(0, Math.floor(maxHistory))
+    : 0
+  return limit === 0 ? [] : entries.slice(-limit)
+}

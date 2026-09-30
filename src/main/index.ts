@@ -8,7 +8,11 @@ import { ChatSessionController } from './chat/chatSessionController'
 import { OpenAICompatibleProvider } from './chat/llmProvider'
 import { ConfigService } from './config'
 import { ElectronSecretStore } from './electronSecretStore'
-import type { AppConfig, LLMSettingsSave } from '../shared/chat'
+import {
+  selectRecentChatHistory,
+  type AppConfig,
+  type LLMSettingsSave
+} from '../shared/chat'
 import { createRequestId } from '../shared/requestId'
 import type { SttStateMessage, VoiceId, VoiceStateMessage } from '../shared/voice'
 import { isVoiceId } from '../shared/voice'
@@ -283,6 +287,11 @@ app.whenReady().then(async () => {
   ipcMain.on('chat:clear', (_event, payload: { requestId: string }) => {
     if (!payload?.requestId) return
     void chatSessionController?.clear(payload.requestId)
+  })
+
+  ipcMain.handle('chat:history', async () => {
+    const entries = (await memoryStore?.load()) ?? []
+    return selectRecentChatHistory(entries, appConfig?.llm.maxHistory ?? 0)
   })
 
   ipcMain.handle('voice:get', (_event, requestId: string) => (

@@ -1,6 +1,10 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { OutfitId } from '../shared/types'
-import type { LLMSettingsSave, LLMSettingsView } from '../shared/chat'
+import type {
+  ChatHistoryEntry,
+  LLMSettingsSave,
+  LLMSettingsView
+} from '../shared/chat'
 import type { CharacterId } from '../shared/characterProfiles'
 import type { RequestId } from '../shared/requestId'
 import type { SttStateMessage, VoiceId, VoiceStateMessage } from '../shared/voice'
@@ -48,6 +52,7 @@ const api = {
   clearChat: (requestId: RequestId): void => {
     ipcRenderer.send('chat:clear', { requestId })
   },
+  getChatHistory: (): Promise<ChatHistoryEntry[]> => ipcRenderer.invoke('chat:history'),
   onChatStart: (callback: (event: { requestId: RequestId }) => void): (() => void) => {
     const listener = (_event: Electron.IpcRendererEvent, payload: { requestId: RequestId }): void => callback(payload)
     ipcRenderer.on('chat:start', listener)

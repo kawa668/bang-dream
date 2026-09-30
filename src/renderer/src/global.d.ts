@@ -1,5 +1,9 @@
 import type { OutfitId } from '../../shared/types'
-import type { LLMSettingsSave, LLMSettingsView } from '../../shared/chat'
+import type {
+  ChatHistoryEntry,
+  LLMSettingsSave,
+  LLMSettingsView
+} from '../../shared/chat'
 import type { CharacterId } from '../../shared/characterProfiles'
 import type { RequestId } from '../../shared/requestId'
 import type { SttStateMessage, VoiceId, VoiceStateMessage } from '../../shared/voice'
@@ -19,6 +23,7 @@ declare global {
       reportMenuOpen: (open: boolean) => void
       sendChatMessage: (requestId: RequestId, text: string) => void
       clearChat: (requestId: RequestId) => void
+      getChatHistory: () => Promise<ChatHistoryEntry[]>
       onChatStart: (callback: (event: { requestId: RequestId }) => void) => () => void
       onChatDelta: (callback: (event: { requestId: RequestId; delta: string }) => void) => () => void
       onChatComplete: (callback: (event: { requestId: RequestId; message: string; emotion?: string }) => void) => () => void

@@ -1,11 +1,8 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
+import type { ChatHistoryEntry } from '../../shared/chat'
 
-export interface MemoryEntry {
-  role: 'user' | 'assistant'
-  content: string
-  createdAt: number
-}
+export type MemoryEntry = ChatHistoryEntry
 
 export interface MemoryStore {
   append(entry: MemoryEntry): Promise<void>
