@@ -11,7 +11,7 @@ Windows 桌面 Live2D 角色应用，集成多角色聊天、GPT-SoVITS 语音�
 - Faster Whisper 语音输入，可选择时自动开启连续语音对话。
 - 根据回复内容自动切换 Live2D 表情。
 - 透明、置顶、鼠标穿透的 Live2D 输出窗口，适合 OBS 窗口捕获。
-- 控制台支持角色切换、服装选择、动作播放、聊天和 AI 参数配置。
+- 模型右键控制面板，集成聊天、语音、AI 设置、人物和动作切换。
 
 ## 环境要求
 
@@ -72,7 +72,7 @@ npm run build
 
 聊天历史保存在同目录的 `memory.json`。API Key 使用系统安全存储加密，不会以明文写入配置。
 
-控制台可以配置：
+右键 Live2D 模型打开控制面板，可以配置：
 
 - LLM 地址、模型、温度、超时和最大历史条数。
 - TTS 服务和 STT 服务地址。
@@ -142,7 +142,7 @@ src/shared/characterProfiles.ts
 ```text
 src/main/       Electron 主进程、聊天、配置、TTS、STT、记忆
 src/preload/    IPC 桥接
-src/renderer/   Live2D 输出窗口和控制台
+src/renderer/   Live2D 输出窗口和模型右键控制面板
 src/shared/     角色、音色、模型、表情和共享类型
 scripts/        Live2D 模型整理和 ASR API
 tests/          Vitest 测试
