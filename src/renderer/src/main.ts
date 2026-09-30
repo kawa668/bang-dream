@@ -8,6 +8,7 @@ import { Live2DRenderer } from './live2d'
 import { ModelManager } from './modelManager'
 import { fetchModelManifest } from './models'
 import { createCollapseToggle } from './dom'
+import './panel.css'
 
 let manualActionUntil = 0
 let contextMenuOpen = false

@@ -178,8 +178,48 @@
   </head>
   <body>
     <script src="./vendor/live2d.min.js"></script>
-    <canvas id="live2d-canvas"></canvas>
+    <canvas id="live2d-canvas" tabindex="-1"></canvas>
     <div id="context-menu"></div>
+    <div
+      id="control-panel"
+      class="control-panel"
+      role="dialog"
+      aria-modal="false"
+      aria-label="Live2D 控制面板"
+      tabindex="-1"
+      hidden
+    >
+      <header class="panel-header">
+        <div class="panel-identity">
+          <strong id="panel-character-name">若叶睦</strong>
+          <span id="panel-model">便装</span>
+        </div>
+        <span id="panel-voice-summary" class="panel-summary">语音已关闭</span>
+        <button id="panel-close" class="icon-button" type="button" aria-label="关闭控制面板">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </header>
+
+      <div id="panel-tabs" class="panel-tabs" role="tablist" aria-label="控制面板页签">
+        <button id="tab-chat" type="button" role="tab" data-tab="chat" aria-controls="panel-chat" aria-selected="true">聊天</button>
+        <button id="tab-voice" type="button" role="tab" data-tab="voice" aria-controls="panel-voice" aria-selected="false">语音</button>
+        <button id="tab-ai" type="button" role="tab" data-tab="ai" aria-controls="panel-ai" aria-selected="false">AI</button>
+        <button id="tab-character" type="button" role="tab" data-tab="character" aria-controls="panel-character" aria-selected="false">角色</button>
+      </div>
+
+      <div class="panel-body">
+        <section id="panel-chat" class="panel-view" role="tabpanel" data-panel="chat" aria-labelledby="tab-chat"></section>
+        <section id="panel-voice" class="panel-view" role="tabpanel" data-panel="voice" aria-labelledby="tab-voice" hidden></section>
+        <section id="panel-ai" class="panel-view" role="tabpanel" data-panel="ai" aria-labelledby="tab-ai" hidden></section>
+        <section id="panel-character" class="panel-view" role="tabpanel" data-panel="character" aria-labelledby="tab-character" hidden></section>
+      </div>
+
+      <footer class="panel-footer">
+        <p id="panel-global-status" class="status" role="status">正在启动...</p>
+      </footer>
+    </div>
     <audio id="voice-audio"></audio>
     <script type="module" src="/src/main.ts"></script>
   </body>
