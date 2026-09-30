@@ -744,7 +744,7 @@ In `src/renderer/index.html`, keep the canvas, audio, and existing context menu 
 >
   <header class="panel-header">
     <div class="panel-identity">
-      <strong id="panel-character">若叶睦</strong>
+      <strong id="panel-character-name">若叶睦</strong>
       <span id="panel-model">便装</span>
     </div>
     <span id="panel-voice-summary" class="panel-summary">语音已关闭</span>
@@ -1003,7 +1003,7 @@ export class ControlPanel {
   }
 
   setCharacterName(name: string): void {
-    const element = this.root.querySelector<HTMLElement>('#panel-character')
+    const element = this.root.querySelector<HTMLElement>('#panel-character-name')
     if (element) element.textContent = name
   }
 
