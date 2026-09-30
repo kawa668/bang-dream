@@ -15,6 +15,7 @@ export class CharacterPanel {
   private readonly actionsByModel = new Map<OutfitId, string[]>()
   private currentModel: OutfitId | null = null
   private actions: string[] = []
+  private renderSequence = 0
 
   constructor(private readonly root: HTMLElement) {
     this.root.innerHTML = `
@@ -44,11 +45,14 @@ export class CharacterPanel {
   }
 
   async setCurrentModel(id: OutfitId): Promise<void> {
+    const sequence = ++this.renderSequence
     this.currentModel = id
     for (const button of this.root.querySelectorAll<HTMLButtonElement>('[data-model-id]')) {
       button.classList.toggle('active', button.dataset.modelId === id)
     }
-    this.actions = await this.loadActions(id)
+    const actions = await this.loadActions(id)
+    if (sequence !== this.renderSequence) return
+    this.actions = actions
     this.renderActions()
     window.api.reportStatus(`当前服装：${id}，可用动作 ${this.actions.length} 个`)
   }
